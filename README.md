@@ -3,6 +3,7 @@
 > **The Ultimate Open-Source macOS Notch & Dynamic Island Hub.**  
 > Built with **Swift 6**, **SwiftUI**, and **AppKit** for macOS Sonoma (14.0+) & Sequoia (15.0+).
 
+[![Release](https://img.shields.io/github/v/release/mdrealofficial/opennotch?color=purple)](https://github.com/mdrealofficial/opennotch/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-macOS%2014.0%2B-blue.svg)](https://apple.com/macos)
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
