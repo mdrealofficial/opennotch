@@ -79,6 +79,9 @@ public struct NotchContainerView: View {
                 case .expanded:
                     expandedDropdown
                         .transition(.opacity)
+                case .dropTarget:
+                    dropTargetView
+                        .transition(.opacity)
                 }
             }
             .frame(width: currentWidth, height: currentHeight, alignment: .top)
@@ -119,6 +122,7 @@ public struct NotchContainerView: View {
         case .compact: base = mediaService.currentTrack.isPlaying ? 210 : 170
         case .peek: base = NotchConstants.defaultCompactWidth
         case .expanded: base = CGFloat(prefs.expandedWidth)
+        case .dropTarget: base = 430
         }
         return max(100, base + CGFloat(prefs.notchWidthOffset))
     }
@@ -129,6 +133,7 @@ public struct NotchContainerView: View {
         case .compact: base = 10
         case .peek: base = NotchConstants.defaultCompactHeight
         case .expanded: base = CGFloat(prefs.expandedHeight)
+        case .dropTarget: base = 72
         }
         return max(8, base + CGFloat(prefs.notchHeightOffset))
     }
@@ -138,6 +143,7 @@ public struct NotchContainerView: View {
         case .compact: return 5
         case .peek: return 8
         case .expanded: return 14
+        case .dropTarget: return 12
         }
     }
     
@@ -146,6 +152,7 @@ public struct NotchContainerView: View {
         case .compact: return 5
         case .peek: return 14
         case .expanded: return 24
+        case .dropTarget: return 18
         }
     }
     
@@ -154,6 +161,7 @@ public struct NotchContainerView: View {
         case .compact: return 0.0
         case .peek: return 0.40
         case .expanded: return 0.35
+        case .dropTarget: return 0.45
         }
     }
     
@@ -162,6 +170,7 @@ public struct NotchContainerView: View {
         case .compact: return 0
         case .peek: return 14
         case .expanded: return 28
+        case .dropTarget: return 24
         }
     }
     
@@ -170,6 +179,7 @@ public struct NotchContainerView: View {
         case .compact: return 0
         case .peek: return 7
         case .expanded: return 14
+        case .dropTarget: return 12
         }
     }
     
@@ -178,6 +188,7 @@ public struct NotchContainerView: View {
         case .compact: return 0.0
         case .peek: return 0.0
         case .expanded: return 0.18
+        case .dropTarget: return 0.20
         }
     }
     
@@ -186,6 +197,7 @@ public struct NotchContainerView: View {
         case .compact: return 0
         case .peek: return 0
         case .expanded: return 10
+        case .dropTarget: return 8
         }
     }
     
@@ -194,6 +206,7 @@ public struct NotchContainerView: View {
         case .compact: return 0
         case .peek: return 0
         case .expanded: return 4
+        case .dropTarget: return 3
         }
     }
     
@@ -352,6 +365,65 @@ public struct NotchContainerView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: NotchConstants.defaultCompactWidth, height: NotchConstants.defaultCompactHeight)
+    }
+    
+    // MARK: - State 4: On Drag Drop Target Shelf (Files Tray & AirDrop)
+    private var dropTargetView: some View {
+        HStack(spacing: 8) {
+            // Left Zone: Files Tray (Dashed cyan border when active)
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(
+                                panelController.activeDropZone == .filesTray ? Color.cyan : Color.white.opacity(0.12),
+                                style: StrokeStyle(
+                                    lineWidth: 1.6,
+                                    dash: panelController.activeDropZone == .filesTray ? [5, 4] : []
+                                )
+                            )
+                    )
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "tray.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(panelController.activeDropZone == .filesTray ? Color.cyan : Color.white.opacity(0.85))
+                    
+                    Text("Files Tray")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.white)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Right Zone: AirDrop (Rich solid blue pill when active)
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(panelController.activeDropZone == .airdrop ? Color(red: 0/255, green: 75/255, blue: 175/255) : Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(
+                                panelController.activeDropZone == .airdrop ? Color.blue.opacity(0.9) : Color.white.opacity(0.12),
+                                lineWidth: 1
+                            )
+                    )
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.white)
+                    
+                    Text("AirDrop")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.white)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(width: currentWidth, height: currentHeight)
     }
     
     // MARK: - State 3: On Click Full Expanded Nook Hub (Image 3)
