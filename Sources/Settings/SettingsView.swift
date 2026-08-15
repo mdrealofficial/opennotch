@@ -29,6 +29,7 @@ public enum SettingsTab: String, CaseIterable, Identifiable {
 public struct SettingsView: View {
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var prefs = UserPreferences.shared
+    @ObservedObject var permissionManager = PermissionManager.shared
     @State private var activeTab: SettingsTab = .general
     @State private var liveActivitiesSubtab: Int = 0
     @State private var nookSubtab: Int = 0
@@ -100,11 +101,109 @@ public struct SettingsView: View {
             }
         }
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
+        .onAppear {
+            permissionManager.checkPermissions()
+        }
     }
     
     // MARK: - 1. General Tab
     private var generalTabContent: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // System Permissions Card
+            VStack(alignment: .leading, spacing: 8) {
+                Text("System Permissions")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.primary)
+                
+                // Accessibility
+                HStack {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.blue)
+                        .frame(width: 20)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Accessibility Access")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Required for smooth drag detection and gestures across background windows")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    if permissionManager.isAccessibilityGranted {
+                        HStack(spacing: 3) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Granted")
+                        }
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.green)
+                    } else {
+                        Button(action: {
+                            permissionManager.requestAccessibilityPermission()
+                        }) {
+                            Text("Grant Permission")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.blue))
+                                .foregroundStyle(Color.white)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+                
+                // Camera
+                HStack {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.purple)
+                        .frame(width: 20)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Camera Access")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Required for the Quick Mirror preview in the Notch")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    if permissionManager.cameraStatus == .authorized {
+                        HStack(spacing: 3) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Granted")
+                        }
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.green)
+                    } else {
+                        Button(action: {
+                            permissionManager.requestCameraPermission { _ in }
+                        }) {
+                            Text("Request Access")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.purple))
+                                .foregroundStyle(Color.white)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.primary.opacity(0.03))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+            )
+            
             Toggle("Launch at login", isOn: Binding(
                 get: { prefs.launchAtLogin },
                 set: { prefs.toggleLaunchAtLogin($0) }
