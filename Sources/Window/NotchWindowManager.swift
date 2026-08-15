@@ -5,7 +5,7 @@ import Combine
 public enum NotchState {
     case compact   // State 1: Normal minimal resting notch (170 x 12)
     case peek      // State 2: On Hover peek pill (220 x 36)
-    case expanded  // State 3: On Click full Nook / Tray hub (580 x 165)
+    case expanded  // State 3: On Click full Nook / Tray hub (580 x 155)
 }
 
 public final class NotchPanelController: ObservableObject, Identifiable {
@@ -15,27 +15,19 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     @Published public var state: NotchState = .compact
     @Published public var isHovered: Bool = false
     
-    private var globalEventMonitor: Any?
-    
     public var isExpanded: Bool {
         state == .expanded
     }
     
     public init(screen: NSScreen) {
         self.screen = screen
-        let initialFrame = Self.frame(for: .compact, on: screen)
-        self.panel = NotchPanel(contentRect: initialFrame)
-        self.updateFrame()
-        self.setupMouseTracking()
+        let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
+        let frame = screenInfo.windowFrame()
+        self.panel = NotchPanel(contentRect: frame)
     }
     
-    deinit {
-        if let monitor = globalEventMonitor {
-            NSEvent.removeMonitor(monitor)
-        }
-    }
-    
-    public static func frame(for state: NotchState, on screen: NSScreen) -> NSRect {
+    /// Returns the exact active physical bounding box of the visible notch in screen coordinates.
+    public func activeVisibleScreenRect() -> NSRect {
         let screenFrame = screen.frame
         let width: CGFloat
         let height: CGFloat
@@ -45,11 +37,11 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             width = 170
             height = 12
         case .peek:
-            width = NotchConstants.defaultCompactWidth + 10 // 230
-            height = NotchConstants.defaultCompactHeight + 8 // 42
+            width = NotchConstants.defaultCompactWidth // 220
+            height = NotchConstants.defaultCompactHeight // 34
         case .expanded:
-            width = NotchConstants.defaultExpandedWidth + 16 // 596
-            height = NotchConstants.defaultExpandedHeight + 16 // 171
+            width = NotchConstants.defaultExpandedWidth // 580
+            height = NotchConstants.defaultExpandedHeight // 155
         }
         
         let x = floor(screenFrame.midX - (width / 2))
@@ -57,33 +49,32 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         return NSRect(x: x, y: y, width: width, height: height)
     }
     
-    public func updateFrame() {
-        let targetFrame = Self.frame(for: state, on: screen)
-        panel.setFrame(targetFrame, display: true)
-    }
-    
     public func setHovered(_ hovered: Bool) {
+        guard self.isHovered != hovered else { return }
         self.isHovered = hovered
+        
         if state != .expanded {
             withAnimation(.spring(response: 0.26, dampingFraction: 0.88)) {
                 self.state = hovered ? .peek : .compact
             }
-            self.updateFrame()
         }
+        
+        // Dynamically toggle ignoresMouseEvents so clicks outside visible notch pass through
+        self.panel.ignoresMouseEvents = !hovered && (state != .expanded)
     }
     
     public func expand() {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.state = .expanded
         }
-        self.updateFrame()
+        self.panel.ignoresMouseEvents = false
     }
     
     public func collapse() {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.state = self.isHovered ? .peek : .compact
         }
-        self.updateFrame()
+        self.panel.ignoresMouseEvents = !self.isHovered
     }
     
     public func toggleExpanded() {
@@ -91,32 +82,6 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             collapse()
         } else {
             expand()
-        }
-    }
-    
-    private func setupMouseTracking() {
-        // Global mouse move monitor to reliably detect entering/leaving notch without taking over screen clicks
-        globalEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
-            self?.checkMousePosition(event.locationInWindow)
-            return event
-        }
-    }
-    
-    private func checkMousePosition(_ location: NSPoint) {
-        // If expanded, let view hover handle closing
-        guard state != .expanded else { return }
-        
-        let mouseScreenPoint = NSEvent.mouseLocation
-        let peekRect = Self.frame(for: .peek, on: screen)
-        
-        if NSPointInRect(mouseScreenPoint, peekRect) {
-            if !isHovered {
-                setHovered(true)
-            }
-        } else {
-            if isHovered {
-                setHovered(false)
-            }
         }
     }
 }
@@ -127,14 +92,18 @@ public final class NotchWindowManager: ObservableObject {
     private var controllers: [NotchPanelController] = []
     private var cancellables = Set<AnyCancellable>()
     private var globalMouseMonitor: Any?
+    private var localMouseMonitor: Any?
     
     private init() {
         setupNotifications()
-        setupGlobalMonitor()
+        setupMouseMonitors()
     }
     
     deinit {
         if let monitor = globalMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        if let monitor = localMouseMonitor {
             NSEvent.removeMonitor(monitor)
         }
     }
@@ -176,7 +145,7 @@ public final class NotchWindowManager: ObservableObject {
             let hostingView = NSHostingView(rootView: NotchContainerView(panelController: controller))
             hostingView.autoresizingMask = [.width, .height]
             controller.panel.contentView = hostingView
-            controller.updateFrame()
+            controller.panel.setFrame(ScreenGeometryHelper.screenInfo(for: screen).windowFrame(), display: true)
             controller.panel.orderFrontRegardless()
             
             controllers.append(controller)
@@ -202,18 +171,34 @@ public final class NotchWindowManager: ObservableObject {
         activeController()?.toggleExpanded()
     }
     
-    private func setupGlobalMonitor() {
+    private func setupMouseMonitors() {
+        // Global monitor (when other apps like Chrome/Finder are active)
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
-            guard let self = self else { return }
-            let mouseLoc = NSEvent.mouseLocation
-            for controller in self.controllers {
+            self?.processMouseLocation(NSEvent.mouseLocation)
+        }
+        
+        // Local monitor (when our app is active)
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.processMouseLocation(NSEvent.mouseLocation)
+            return event
+        }
+    }
+    
+    private func processMouseLocation(_ mouseLoc: NSPoint) {
+        for controller in controllers {
+            let visibleRect = controller.activeVisibleScreenRect()
+            let isInside = NSPointInRect(mouseLoc, visibleRect)
+            
+            if isInside {
+                controller.setHovered(true)
+            } else {
                 if controller.state != .expanded {
-                    let peekRect = NotchPanelController.frame(for: .peek, on: controller.screen)
-                    let inRect = NSPointInRect(mouseLoc, peekRect)
-                    if inRect && !controller.isHovered {
-                        controller.setHovered(true)
-                    } else if !inRect && controller.isHovered {
-                        controller.setHovered(false)
+                    controller.setHovered(false)
+                } else if UserPreferences.shared.alwaysOpenOnHover {
+                    // If expanded and mouse moved far outside, collapse
+                    let expandedRect = controller.activeVisibleScreenRect()
+                    if !NSPointInRect(mouseLoc, expandedRect) {
+                        controller.collapse()
                     }
                 }
             }

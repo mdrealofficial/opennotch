@@ -21,7 +21,9 @@ public final class NotchPanel: NSPanel {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.hasShadow = false
-        self.ignoresMouseEvents = false
+        // By default ignore mouse events so underlying apps receive all clicks.
+        // Dynamically toggled to false only when mouse enters the visible notch frame.
+        self.ignoresMouseEvents = true
         self.acceptsMouseMovedEvents = true
         self.hidesOnDeactivate = false
     }

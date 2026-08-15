@@ -26,8 +26,7 @@ public struct NotchScreenInfo {
         }
     }
     
-    /// Stable, fixed window frame spanning the maximum interactive area.
-    /// This prevents dynamic window frame resizes and eliminates 100% of AppKit constraint crashes.
+    /// Stable fixed window frame spanning the maximum interactive area.
     public func windowFrame() -> NSRect {
         let x = floor(screenFrame.midX - (Self.canvasWidth / 2))
         let y = screenFrame.maxY - Self.canvasHeight
