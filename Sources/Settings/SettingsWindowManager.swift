@@ -23,14 +23,17 @@ public final class SettingsWindowManager: ObservableObject {
         
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 560, height: 540),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         
+        window.minSize = NSSize(width: 500, height: 420)
+        window.maxSize = NSSize(width: 1000, height: 850)
+        
         if let screen = NSScreen.main {
             let x = floor(screen.frame.midX - 280)
-            let y = floor(screen.frame.midY - 270 - 40) // Comfortably centered below top menu bar
+            let y = floor(screen.frame.midY - 270 - 40)
             window.setFrameOrigin(NSPoint(x: x, y: y))
         } else {
             window.center()

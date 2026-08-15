@@ -99,7 +99,7 @@ public struct SettingsView: View {
                 .padding(20)
             }
         }
-        .frame(width: 540, height: 490)
+        .frame(minWidth: 500, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
     }
     
     // MARK: - 1. General Tab
