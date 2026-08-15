@@ -101,10 +101,11 @@ public struct NotchContainerView: View {
             }
         }
         .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: NotchConstants.defaultCompactWidth, height: NotchConstants.defaultCompactHeight)
         .background(
             NotchShape(earRadius: 6, cornerRadius: 14)
                 .fill(Color.black)
+                .shadow(color: Color.black.opacity(0.20), radius: 6, x: 0, y: 3)
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -114,7 +115,7 @@ public struct NotchContainerView: View {
         }
     }
     
-    // MARK: - 2. Expanded Notch Dropdown
+    // MARK: - 2. Expanded Notch Dropdown with Ultra-Smooth Multi-Layer Shadow
     private var expandedDropdown: some View {
         VStack(spacing: 6) {
             // Top Bar: [🪄 Nook | 📦 Tray] ................ [⚙️]
@@ -177,11 +178,20 @@ public struct NotchContainerView: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: NotchConstants.defaultExpandedWidth, height: NotchConstants.defaultExpandedHeight)
         .background(
-            NotchShape(earRadius: 12, cornerRadius: 22)
-                .fill(Color.black)
-                .shadow(color: Color.black.opacity(0.7), radius: 24, x: 0, y: 12)
+            ZStack {
+                // Background Fill with specular stroke
+                NotchShape(earRadius: 12, cornerRadius: 22)
+                    .fill(Color.black)
+                    .overlay(
+                        NotchShape(earRadius: 12, cornerRadius: 22)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
+                    )
+            }
+            // Multi-tier smooth diffuse drop shadow (Never clipped)
+            .shadow(color: Color.black.opacity(0.32), radius: 28, x: 0, y: 14)
+            .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 4)
         )
     }
     
@@ -347,7 +357,7 @@ public struct NotchContainerView: View {
         .padding(.horizontal, 10)
     }
     
-    // MARK: - Hover Handlers (Per-Screen Independent Hover)
+    // MARK: - Hover Handlers
     private func handleHover(_ hovering: Bool) {
         isHovering = hovering
         guard prefs.alwaysOpenOnHover else { return }
