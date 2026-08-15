@@ -54,7 +54,8 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         self.isHovered = hovered
         
         if state != .expanded {
-            withAnimation(.spring(response: 0.26, dampingFraction: 0.88)) {
+            // Ultra-soft ease in and out animation
+            withAnimation(.easeInOut(duration: 0.28)) {
                 self.state = hovered ? .peek : .compact
             }
         }
@@ -64,14 +65,16 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     }
     
     public func expand() {
-        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+        // Ultra-soft ease in and out expand animation
+        withAnimation(.easeInOut(duration: 0.34)) {
             self.state = .expanded
         }
         self.panel.ignoresMouseEvents = false
     }
     
     public func collapse() {
-        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+        // Ultra-soft ease in and out collapse animation
+        withAnimation(.easeInOut(duration: 0.30)) {
             self.state = self.isHovered ? .peek : .compact
         }
         self.panel.ignoresMouseEvents = !self.isHovered
@@ -195,7 +198,6 @@ public final class NotchWindowManager: ObservableObject {
                 if controller.state != .expanded {
                     controller.setHovered(false)
                 } else if UserPreferences.shared.alwaysOpenOnHover {
-                    // If expanded and mouse moved far outside, collapse
                     let expandedRect = controller.activeVisibleScreenRect()
                     if !NSPointInRect(mouseLoc, expandedRect) {
                         controller.collapse()

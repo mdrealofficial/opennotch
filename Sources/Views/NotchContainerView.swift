@@ -32,16 +32,20 @@ public struct NotchContainerView: View {
             case .peek:
                 // State 2: On Hover Expanded Peek Pill (Image 2)
                 hoverPeekBar
-                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .top)),
+                        removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
+                    ))
             case .expanded:
                 // State 3: On Click Full Nook Hub (Image 3)
                 expandedDropdown
                     .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
-                        removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+                        insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)),
+                        removal: .opacity.combined(with: .scale(scale: 0.97, anchor: .top))
                     ))
             }
         }
+        .animation(.easeInOut(duration: 0.32), value: panelController.state)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .ignoresSafeArea()
         .contextMenu {
