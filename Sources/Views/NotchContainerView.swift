@@ -1,12 +1,6 @@
 import SwiftUI
 import AppKit
 
-public enum NotchViewMode: String, CaseIterable {
-    case nook = "Nook"
-    case tray = "Tray"
-    case bt = "BT"
-}
-
 public struct NotchContainerView: View {
     @ObservedObject var panelController: NotchPanelController
     @ObservedObject var prefs = UserPreferences.shared
@@ -17,7 +11,6 @@ public struct NotchContainerView: View {
     @ObservedObject var cameraService = CameraService.shared
     @ObservedObject var btService = BluetoothService.shared
     
-    @State private var viewMode: NotchViewMode = .nook
     @State private var showMirrorModal: Bool = false
     @State private var isCompactMediaHovered: Bool = false
     @State private var isPeekMediaHovered: Bool = false
@@ -434,7 +427,7 @@ public struct NotchContainerView: View {
                 HStack(spacing: 12) {
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
-                            viewMode = .nook
+                            panelController.viewMode = .nook
                         }
                     }) {
                         HStack(spacing: 5) {
@@ -443,13 +436,13 @@ public struct NotchContainerView: View {
                             Text("Nook")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(viewMode == .nook ? Color.white : Color.white.opacity(0.40))
+                        .foregroundStyle(panelController.viewMode == .nook ? Color.white : Color.white.opacity(0.40))
                     }
                     .buttonStyle(.plain)
                     
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
-                            viewMode = .tray
+                            panelController.viewMode = .tray
                         }
                     }) {
                         HStack(spacing: 5) {
@@ -458,13 +451,13 @@ public struct NotchContainerView: View {
                             Text("Tray")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(viewMode == .tray ? Color.white : Color.white.opacity(0.40))
+                        .foregroundStyle(panelController.viewMode == .tray ? Color.white : Color.white.opacity(0.40))
                     }
                     .buttonStyle(.plain)
                     
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
-                            viewMode = .bt
+                            panelController.viewMode = .bt
                         }
                     }) {
                         HStack(spacing: 5) {
@@ -472,7 +465,7 @@ public struct NotchContainerView: View {
                             Text("BT")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(viewMode == .bt ? Color.white : Color.white.opacity(0.40))
+                        .foregroundStyle(panelController.viewMode == .bt ? Color.white : Color.white.opacity(0.40))
                     }
                     .buttonStyle(.plain)
                 }
@@ -497,9 +490,9 @@ public struct NotchContainerView: View {
             
             // Dropdown Content
             ZStack(alignment: .top) {
-                if viewMode == .nook {
+                if panelController.viewMode == .nook {
                     nookContentView
-                } else if viewMode == .tray {
+                } else if panelController.viewMode == .tray {
                     trayContentView
                 } else {
                     bluetoothContentView
