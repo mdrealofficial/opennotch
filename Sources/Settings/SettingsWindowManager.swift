@@ -19,7 +19,7 @@ public final class SettingsWindowManager: ObservableObject {
         let hostingController = NSHostingController(rootView: settingsView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 540, height: 530),
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 540),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -28,6 +28,8 @@ public final class SettingsWindowManager: ObservableObject {
         window.title = "OpenNotch Settings"
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false
+        window.isMovable = true
+        window.isMovableByWindowBackground = true
         
         let controller = NSWindowController(window: window)
         self.windowController = controller

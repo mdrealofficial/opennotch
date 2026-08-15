@@ -40,34 +40,37 @@ public struct SettingsView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // MARK: - Native Header Toolbar
-            HStack(spacing: 8) {
+            HStack(spacing: 4) {
                 ForEach(SettingsTab.allCases) { tab in
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.12)) {
                             activeTab = tab
                         }
                     }) {
-                        VStack(spacing: 4) {
+                        VStack(spacing: 3) {
                             Image(systemName: tab.icon)
-                                .font(.system(size: 18))
+                                .font(.system(size: 17))
                                 .foregroundStyle(activeTab == tab ? Color.accentColor : Color.secondary)
                             
                             Text(tab.rawValue)
                                 .font(.system(size: 10, weight: activeTab == tab ? .semibold : .regular))
                                 .foregroundStyle(activeTab == tab ? Color.primary : Color.secondary)
+                                .lineLimit(1)
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .contentShape(Rectangle())
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(activeTab == tab ? Color.primary.opacity(0.08) : Color.clear)
+                                .fill(activeTab == tab ? Color.primary.opacity(0.09) : Color.clear)
                         )
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                 }
             }
-            .padding(.top, 10)
-            .padding(.bottom, 8)
+            .padding(.horizontal, 10)
+            .padding(.top, 8)
+            .padding(.bottom, 6)
             
             Divider()
             
