@@ -397,16 +397,44 @@ public struct SettingsView: View {
     }
     
     // MARK: - 6. Drop Area Tab
+    @State private var dropAreaSubtab: Int = 0
+    
     private var dropAreaTabContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Drop Area Settings")
-                .font(.system(size: 12, weight: .bold))
-            Toggle("Accept files dropped directly onto notch", isOn: .constant(true))
-            Toggle("Show drop target highlight aura", isOn: .constant(true))
+        VStack(spacing: 12) {
+            Picker("", selection: $dropAreaSubtab) {
+                Text("General").tag(0)
+                Text("Customize pipelines").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 260)
+            
+            if dropAreaSubtab == 0 {
+                HStack {
+                    Text("Width:")
+                        .frame(width: 60, alignment: .trailing)
+                    Slider(value: $prefs.dropAreaWidth, in: 4...40, step: 1)
+                        .tint(.blue)
+                    Text("\(Int(prefs.dropAreaWidth))")
+                        .frame(width: 30)
+                }
+                .padding(.horizontal, 40)
+                .padding(.top, 10)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Configured Drop Pipelines:")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("• AirDrop Stash & Hold")
+                    Text("• Quick Share to Terminal / Git")
+                    Text("• File Hash & Size Calculator")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.8))
+                .padding(.horizontal, 40)
+                .padding(.top, 6)
+            }
         }
         .font(.system(size: 11))
         .foregroundStyle(.white)
-        .padding(.horizontal, 20)
     }
     
     // MARK: - 7. License Tab
@@ -430,20 +458,124 @@ public struct SettingsView: View {
     
     // MARK: - 8. About Tab
     private var aboutTabContent: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "sparkles.rectangle.stack.fill")
-                .font(.system(size: 26))
-                .foregroundStyle(.purple)
+        VStack(spacing: 12) {
+            // Header Row
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.black, Color.purple.opacity(0.8)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 54, height: 54)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                    
+                    Text("◡̈")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("OpenNotch")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                        
+                        Spacer()
+                        
+                        Button("Check for Updates...") {
+                            if let url = URL(string: "https://github.com/mdrealofficial/opennotch/releases/latest") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                    
+                    Text("v1.0.0 (see changelog)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.6))
+                    
+                    HStack(spacing: 16) {
+                        Toggle("Auto download updates", isOn: $prefs.autoDownloadUpdates)
+                        Toggle("Auto check for updates", isOn: $prefs.autoCheckUpdates)
+                    }
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.8))
+                }
+            }
+            .padding(.horizontal, 10)
             
-            Text("OpenNotch v1.0.0")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
+            Divider().background(Color.white.opacity(0.12))
             
-            Text("GitHub: github.com/mdrealofficial/opennotch")
-                .font(.system(size: 11))
-                .foregroundStyle(.cyan)
+            // Community Statement
+            VStack(spacing: 4) {
+                Text("OpenNotch is crafted by")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.6))
+                
+                Text("the Dev Community")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.purple, .blue, .cyan],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 0)
+                
+                Text("A global group of passionate developers building amazing free software for macOS together.")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+            
+            // Link Pills
+            HStack(spacing: 8) {
+                LinkButton(title: "GitHub Repo", icon: "globe", urlString: "https://github.com/mdrealofficial/opennotch")
+                LinkButton(title: "Discussions", icon: "bubble.left.and.bubble.right.fill", urlString: "https://github.com/mdrealofficial/opennotch/discussions")
+                LinkButton(title: "MIT License", icon: "doc.text.fill", urlString: "https://github.com/mdrealofficial/opennotch/blob/main/LICENSE")
+                LinkButton(title: "Privacy Policy", icon: "hand.raised.fill", urlString: "https://github.com/mdrealofficial/opennotch#license")
+            }
+            .padding(.top, 4)
         }
-        .padding(8)
+        .font(.system(size: 11))
+        .foregroundStyle(.white)
+        .padding(.vertical, 4)
+    }
+}
+
+public struct LinkButton: View {
+    let title: String
+    let icon: String
+    let urlString: String
+    
+    public var body: some View {
+        Button(action: {
+            if let url = URL(string: urlString) {
+                NSWorkspace.shared.open(url)
+            }
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 10))
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(Color.white.opacity(0.08)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+            .foregroundStyle(.white.opacity(0.85))
+        }
+        .buttonStyle(.plain)
     }
 }
 

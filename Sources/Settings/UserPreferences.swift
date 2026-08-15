@@ -55,6 +55,11 @@ public final class UserPreferences: ObservableObject {
     @AppStorage("transparentHandler") public var transparentHandler: Bool = false
     @AppStorage("demoMode") public var demoMode: Bool = false
     
+    // Drop Area
+    @AppStorage("dropAreaWidth") public var dropAreaWidth: Double = 11
+    @AppStorage("autoDownloadUpdates") public var autoDownloadUpdates: Bool = false
+    @AppStorage("autoCheckUpdates") public var autoCheckUpdates: Bool = true
+    
     // MARK: - Gestures Tab
     @AppStorage("allowHoverGestures") public var allowHoverGestures: Bool = true
     @AppStorage("verticalGestureOpenClose") public var verticalGestureOpenClose: Bool = true
