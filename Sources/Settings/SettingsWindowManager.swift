@@ -9,6 +9,9 @@ public final class SettingsWindowManager: ObservableObject {
     private init() {}
     
     public func openSettings() {
+        // Automatically collapse the expanded notch so Settings is 100% visible and unobstructed
+        NotchWindowManager.shared.collapse()
+        
         if let existing = windowController?.window {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -24,7 +27,16 @@ public final class SettingsWindowManager: ObservableObject {
             backing: .buffered,
             defer: false
         )
-        window.center()
+        
+        if let screen = NSScreen.main {
+            let x = floor(screen.frame.midX - 280)
+            let y = floor(screen.frame.midY - 270 - 40) // Comfortably centered below top menu bar
+            window.setFrameOrigin(NSPoint(x: x, y: y))
+        } else {
+            window.center()
+        }
+        
+        window.level = .floating
         window.title = "OpenNotch Settings"
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false
