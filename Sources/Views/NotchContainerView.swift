@@ -64,16 +64,10 @@ public struct NotchContainerView: View {
     
     // MARK: - State 1: Normal Minimal Resting Notch (Image 1)
     private var compactRestingBar: some View {
-        Rectangle()
+        NotchShape(earRadius: 5, cornerRadius: 5)
             .fill(Color.black)
             .frame(width: 170, height: 10)
-            .clipShape(NotchShape(earRadius: 4, cornerRadius: 8))
             .contentShape(Rectangle())
-            .onHover { hovering in
-                if hovering {
-                    panelController.setHovered(true)
-                }
-            }
             .onTapGesture {
                 panelController.toggleExpanded()
             }
@@ -136,14 +130,11 @@ public struct NotchContainerView: View {
         .padding(.horizontal, 14)
         .frame(width: NotchConstants.defaultCompactWidth, height: NotchConstants.defaultCompactHeight)
         .background(
-            NotchShape(earRadius: 6, cornerRadius: 14)
+            NotchShape(earRadius: 8, cornerRadius: 14)
                 .fill(Color.black)
-                .shadow(color: Color.black.opacity(0.35), radius: 12, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(0.40), radius: 14, x: 0, y: 7)
         )
         .contentShape(Rectangle())
-        .onHover { hovering in
-            panelController.setHovered(hovering)
-        }
         .onTapGesture {
             panelController.toggleExpanded()
         }
@@ -215,22 +206,17 @@ public struct NotchContainerView: View {
         .frame(width: NotchConstants.defaultExpandedWidth, height: NotchConstants.defaultExpandedHeight)
         .background(
             ZStack {
-                NotchShape(earRadius: 12, cornerRadius: 22)
+                NotchShape(earRadius: 14, cornerRadius: 24)
                     .fill(Color.black)
                     .overlay(
-                        NotchShape(earRadius: 12, cornerRadius: 22)
+                        NotchShape(earRadius: 14, cornerRadius: 24)
                             .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
                     )
             }
-            .shadow(color: Color.black.opacity(0.32), radius: 28, x: 0, y: 14)
+            .shadow(color: Color.black.opacity(0.35), radius: 28, x: 0, y: 14)
             .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 4)
         )
         .contentShape(Rectangle())
-        .onHover { hovering in
-            if !hovering && prefs.alwaysOpenOnHover {
-                panelController.collapse()
-            }
-        }
     }
     
     // MARK: - Nook Mode (Image 3 Left Media Hub & Quick Launcher)
@@ -278,17 +264,17 @@ public struct NotchContainerView: View {
                         ProgressView(value: min(1.0, max(0.0, mediaService.currentTrack.duration > 0 ? mediaService.currentTrack.position / mediaService.currentTrack.duration : 0.35)))
                             .progressViewStyle(.linear)
                             .tint(.white)
-                    
-                    HStack {
-                        Text("0:14")
-                        Spacer()
-                        Text("0:25")
+                        
+                        HStack {
+                            Text("0:14")
+                            Spacer()
+                            Text("0:25")
+                        }
+                        .font(.system(size: 8, weight: .regular, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
                     }
-                    .font(.system(size: 8, weight: .regular, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
                 }
-            }
-            .frame(maxWidth: 190, alignment: .leading)
+                .frame(maxWidth: 190, alignment: .leading)
             } else {
                 // "No app seems to be running. Wanna open one?" (Exact Image 3)
                 VStack(spacing: 4) {

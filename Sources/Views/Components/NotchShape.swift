@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// Custom Bezier Notch Shape that features top concave ears (flaring outward to connect with the macOS menu bar)
-/// and smooth continuous convex bottom corners matching MacBook hardware.
+/// Ultra-smooth Apple-grade Bezier Notch Shape with continuous G2 curvature (squircle).
+/// Features organic concave ear fillets flaring into the top screen bezel and smooth convex rounded bottom corners.
 public struct NotchShape: Shape {
-    public var earRadius: CGFloat = 10
-    public var cornerRadius: CGFloat = 20
+    public var earRadius: CGFloat
+    public var cornerRadius: CGFloat
     
-    public init(earRadius: CGFloat = 10, cornerRadius: CGFloat = 20) {
+    public init(earRadius: CGFloat = 12, cornerRadius: CGFloat = 20) {
         self.earRadius = earRadius
         self.cornerRadius = cornerRadius
     }
@@ -16,43 +16,47 @@ public struct NotchShape: Shape {
         
         let w = rect.width
         let h = rect.height
-        let ear = max(0, min(earRadius, 16))
+        let ear = max(0, min(earRadius, w / 4))
         let cr = max(0, min(cornerRadius, h / 2))
         
-        // 1. Start top-left corner
+        // 1. Start top-left (0, 0)
         path.move(to: CGPoint(x: 0, y: 0))
         
-        // 2. Concave top-left ear fillet (curving inward and down)
-        path.addQuadCurve(
+        // 2. Concave top-left ear flare with continuous cubic Bezier
+        path.addCurve(
             to: CGPoint(x: ear, y: ear),
-            control: CGPoint(x: 0, y: ear)
+            control1: CGPoint(x: ear * 0.45, y: 0),
+            control2: CGPoint(x: ear, y: ear * 0.55)
         )
         
-        // 3. Left vertical drop
+        // 3. Left vertical edge
         path.addLine(to: CGPoint(x: ear, y: h - cr))
         
-        // 4. Convex bottom-left corner
-        path.addQuadCurve(
+        // 4. Convex bottom-left corner with continuous cubic Bezier
+        path.addCurve(
             to: CGPoint(x: ear + cr, y: h),
-            control: CGPoint(x: ear, y: h)
+            control1: CGPoint(x: ear, y: h - cr * 0.45),
+            control2: CGPoint(x: ear + cr * 0.45, y: h)
         )
         
         // 5. Bottom horizontal edge
         path.addLine(to: CGPoint(x: w - ear - cr, y: h))
         
-        // 6. Convex bottom-right corner
-        path.addQuadCurve(
+        // 6. Convex bottom-right corner with continuous cubic Bezier
+        path.addCurve(
             to: CGPoint(x: w - ear, y: h - cr),
-            control: CGPoint(x: w - ear, y: h)
+            control1: CGPoint(x: w - ear - cr * 0.45, y: h),
+            control2: CGPoint(x: w - ear, y: h - cr * 0.45)
         )
         
-        // 7. Right vertical rise
+        // 7. Right vertical edge
         path.addLine(to: CGPoint(x: w - ear, y: ear))
         
-        // 8. Concave top-right ear fillet (curving outward to top edge)
-        path.addQuadCurve(
+        // 8. Concave top-right ear flare with continuous cubic Bezier
+        path.addCurve(
             to: CGPoint(x: w, y: 0),
-            control: CGPoint(x: w, y: ear)
+            control1: CGPoint(x: w - ear, y: ear * 0.55),
+            control2: CGPoint(x: w - ear * 0.45, y: 0)
         )
         
         // 9. Close top edge
