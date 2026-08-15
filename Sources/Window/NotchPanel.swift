@@ -22,13 +22,10 @@ public final class NotchPanel: NSPanel {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.hasShadow = false
-        // By default ignore mouse events so underlying apps receive all clicks.
-        // Dynamically toggled to false only when mouse enters the visible notch frame or during drags.
         self.ignoresMouseEvents = true
         self.acceptsMouseMovedEvents = true
         self.hidesOnDeactivate = false
         
-        // Register for all dragged file and URL types
         self.registerForDraggedTypes([
             .fileURL,
             .URL,
@@ -39,12 +36,13 @@ public final class NotchPanel: NSPanel {
             NSPasteboard.PasteboardType("public.item"),
             NSPasteboard.PasteboardType("public.file-url"),
             NSPasteboard.PasteboardType("public.content"),
-            NSPasteboard.PasteboardType("public.data")
+            NSPasteboard.PasteboardType("public.data"),
+            NSPasteboard.PasteboardType("NSFilenamesPboardType")
         ])
     }
     
     public override var canBecomeKey: Bool {
-        return false
+        return true
     }
     
     public override var canBecomeMain: Bool {
@@ -54,6 +52,23 @@ public final class NotchPanel: NSPanel {
 
 public final class NotchHostingView<Content: View>: NSHostingView<Content> {
     public weak var panelController: NotchPanelController?
+    
+    public override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        self.registerForDraggedTypes([
+            .fileURL,
+            .URL,
+            .string,
+            .tiff,
+            .png,
+            .rtf,
+            NSPasteboard.PasteboardType("public.item"),
+            NSPasteboard.PasteboardType("public.file-url"),
+            NSPasteboard.PasteboardType("public.content"),
+            NSPasteboard.PasteboardType("public.data"),
+            NSPasteboard.PasteboardType("NSFilenamesPboardType")
+        ])
+    }
     
     public override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
         panelController?.handleDraggingEntered(sender)
@@ -69,7 +84,15 @@ public final class NotchHostingView<Content: View>: NSHostingView<Content> {
         panelController?.handleDraggingExited(sender)
     }
     
+    public override func prepareForDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+        return true
+    }
+    
     public override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         return panelController?.handlePerformDrag(sender) ?? false
+    }
+    
+    public override func concludeDragOperation(_ sender: (any NSDraggingInfo)?) {
+        // Concluded
     }
 }
