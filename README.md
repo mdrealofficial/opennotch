@@ -7,89 +7,47 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%2014.0%2B-blue.svg)](https://apple.com/macos)
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ---
 
-## ✨ Features (100% Feature Parity & Beyond)
+## 📥 Installation
+
+1. Download the latest release: [**`OpenNotch-v1.2.0-macOS.dmg`**](https://github.com/mdrealofficial/opennotch/releases/latest) or [**`OpenNotch-v1.2.0-macOS.zip`**](https://github.com/mdrealofficial/opennotch/releases/latest).
+2. Move **`OpenNotch.app`** into your **`/Applications`** folder.
+3. If macOS displays *"OpenNotch is damaged and can’t be opened"* (due to macOS Gatekeeper for open-source apps), simply open **Terminal** and run:
+   ```bash
+   xattr -cr /Applications/OpenNotch.app
+   ```
+   *(Or right-click `OpenNotch.app` -> select **Open** -> click **Open**).*
+
+---
+
+## ✨ Features
 
 | Feature | Description |
 | :--- | :--- |
 | 🪄 **Hardware Notch Snapping** | Auto-detects physical MacBook notch insets and blends seamlessly. |
 | 🏝️ **Dynamic Floating Island** | Elegant floating capsule fallback for external monitors and notch-less Macs. |
-| 🎵 **Media Player & Visualizer** | Live status for **Apple Music**, **Spotify**, and browser playback (YouTube/Chrome/Safari), animated equalizer, and scrubbing. |
-| 📦 **Drop Shelf (AirDrop & Stash)** | Stash files, view sizes, copy paths, reveal in Finder, or drag out to apps. |
-| 🪞 **Camera Mirror Widget** | Instant webcam preview directly in the notch before video meetings. |
-| ⏱️ **Timer & Stopwatch** | Live Pomodoro & countdown timers with real-time countdown badge in the compact notch. |
-| 🎧 **Bluetooth Accessories Hub** | Real-time monitoring of paired/connected devices (AirPods, Magic Mouse, Keyboard, iPhone, Mac) with live battery levels and connect toggles. |
-| ⚡️ **Pipelines & Shortcuts Runner** | 1-click execution for macOS Shortcuts, screenshot capture, appearance toggle, and scripts. |
-| 💻 **Developer HUD (CPU, RAM, Uptime)** | Live CPU load, RAM usage, Battery health, Terminal launcher, and Unix timestamps. |
-| 📅 **Calendar & Scratchpad** | Daily meeting glance and persistent temporary notes scratchpad. |
-| 🧩 **Open-Source NotchWidget Plugin API** | Easily build custom widgets with the open `NotchWidget` Swift protocol. |
+| 📦 **Dynamic Drop Shelf & AirDrop** | Drag any file towards the notch to reveal the 2-zone drop target (Files Tray & AirDrop). |
+| 🎵 **Media Player & Visualizer** | Live status for Apple Music, Spotify, and browser audio with animated 4-bar equalizer. |
+| 🎧 **Bluetooth Accessories Hub** | Paired device monitoring with live battery % and instant connect/disconnect toggles. |
+| ⚙️ **Configurable Hover Styles** | Customize hover peek content (Live Activities, Clock/Date, CPU/Battery Stats, Shortcuts). |
+| 🪞 **Camera Mirror Widget** | Instant webcam preview directly in the notch. |
+| ⏱️ **Timer & Stopwatch** | Live Pomodoro & countdown timers. |
+| 💻 **Developer HUD** | Live CPU load, RAM usage, Battery health, and Terminal quick actions. |
 
 ---
 
-## 📊 OpenNotch vs. NotchNook Comparison
+## 🚀 Building From Source
 
-| Feature | NotchNook (Closed Source) | OpenNotch (Open Source) |
-| :--- | :---: | :---: |
-| **Physical Notch & Floating Island Snapping** | ✅ | ✅ |
-| **Media Player & Live Spectrum Visualizer** | ✅ | ✅ |
-| **Drop Shelf & File Stashing** | ✅ | ✅ |
-| **Camera Mirror Check** | ✅ | ✅ |
-| **Live Timers & Pomodoro** | ✅ | ✅ |
-| **Connected Bluetooth Devices & Battery** | ✅ | ✅ |
-| **Shortcuts & Pipelines Runner** | ✅ | ✅ |
-| **Calendar Glance & Notes Scratchpad** | ✅ | ✅ |
-| **💻 Developer HUD (CPU, RAM, Uptime)** | ❌ | **✅ (Exclusive)** |
-| **🧩 Open-Source `NotchWidget` Plugin API** | ❌ | **✅ (Exclusive)** |
-| **100% Free & Open Source (MIT)** | ❌ *(Paid)* | **✅ (Free / MIT)** |
-
----
-
-## 🛠️ Architecture
-
-```mermaid
-flowchart TD
-    App["OpenNotch App"] --> WindowManager["NotchWindowManager"]
-    WindowManager --> ScreenDetector["ScreenGeometryHelper"]
-    WindowManager --> Panel["NotchPanel (NSPanel)"]
-    Panel --> Container["NotchContainerView (SwiftUI)"]
-    
-    Container --> CompactView["Compact Notch Capsule"]
-    Container --> ExpandedView["Expanded Glass Hub"]
-    
-    ExpandedView --> TabMedia["🎵 Media Hub"]
-    ExpandedView --> TabShelf["📦 Drop Shelf"]
-    ExpandedView --> TabBT["🎧 Bluetooth Gear"]
-    ExpandedView --> TabMirror["🪞 Camera Mirror"]
-    ExpandedView --> TabTimer["⏱️ Timers & Pomodoro"]
-    ExpandedView --> TabSettings["⚙️ Preferences"]
-```
-
----
-
-## 🚀 Building and Running Locally
-
-### Prerequisites
-- macOS 14.0 (Sonoma) or newer
-- Xcode 15.0+ / Swift 6 toolchain
-
-### Quick Start
 ```bash
-# Clone the repository
 git clone https://github.com/mdrealofficial/opennotch.git
 cd opennotch
-
-# Build the project
-swift build
-
-# Run OpenNotch
+swift build -c release
 swift run
 ```
 
 ---
 
 ## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+MIT License © Md Real
