@@ -10,8 +10,9 @@ public struct MediaTrackInfo: Equatable {
     public let artworkData: Data?
     public let duration: Double
     public let position: Double
+    public let sourceApp: String
     
-    public init(title: String = "", artist: String = "", album: String = "", isPlaying: Bool = false, artworkData: Data? = nil, duration: Double = 0, position: Double = 0) {
+    public init(title: String = "", artist: String = "", album: String = "", isPlaying: Bool = false, artworkData: Data? = nil, duration: Double = 0, position: Double = 0, sourceApp: String = "Media") {
         self.title = title
         self.artist = artist
         self.album = album
@@ -19,6 +20,7 @@ public struct MediaTrackInfo: Equatable {
         self.artworkData = artworkData
         self.duration = duration
         self.position = position
+        self.sourceApp = sourceApp
     }
 }
 
