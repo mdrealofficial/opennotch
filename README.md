@@ -80,7 +80,7 @@ flowchart TD
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/OpenNotch.git
+git clone https://github.com/mdrealofficial/opennotch.git
 cd OpenNotch
 
 # Build the project
