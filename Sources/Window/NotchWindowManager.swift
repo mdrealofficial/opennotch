@@ -120,12 +120,12 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     
     public func handleDraggingEntered(_ sender: NSDraggingInfo) {
         enterDropTargetMode()
-        updateDropZone(location: sender.draggingLocation)
+        updateDropZone()
     }
     
     public func handleDraggingUpdated(_ sender: NSDraggingInfo) {
         enterDropTargetMode()
-        updateDropZone(location: sender.draggingLocation)
+        updateDropZone()
     }
     
     public func handleDraggingExited(_ sender: NSDraggingInfo?) {
@@ -140,19 +140,22 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         }
     }
     
-    private func updateDropZone(location: NSPoint) {
+    private func updateDropZone() {
+        let mouseX = NSEvent.mouseLocation.x
         let screenMidX = screen.frame.midX
-        if location.x > 500 {
-            // Screen coordinates
-            self.activeDropZone = (location.x < screenMidX) ? .filesTray : .airdrop
+        if mouseX < screenMidX {
+            self.activeDropZone = .filesTray
         } else {
-            // Local window coordinates (430 pt pill width)
-            self.activeDropZone = (location.x < 215) ? .filesTray : .airdrop
+            self.activeDropZone = .airdrop
         }
     }
     
     public func handlePerformDrag(_ sender: NSDraggingInfo) -> Bool {
         self.isPerformingDrop = true
+        let mouseX = NSEvent.mouseLocation.x
+        let screenMidX = screen.frame.midX
+        let targetZone: DropZoneTarget = (mouseX < screenMidX) ? .filesTray : .airdrop
+        self.activeDropZone = targetZone
         let pboard = sender.draggingPasteboard
         var urlsToShare: [URL] = []
         
@@ -187,8 +190,6 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             collapse()
             return false
         }
-        
-        let targetZone = self.activeDropZone
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
