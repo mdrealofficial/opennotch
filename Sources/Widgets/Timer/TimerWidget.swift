@@ -94,8 +94,8 @@ public struct TimerWidgetView: View {
                 .frame(width: 180)
                 
                 Text(timerService.displayString)
-                    .font(.system(size: 42, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .foregroundStyle(OpenNotchTheme.textPrimary)
                 
                 // Play / Pause / Reset Buttons
                 HStack(spacing: 12) {
@@ -114,9 +114,9 @@ public struct TimerWidgetView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 6)
                         .background(
-                            Capsule().fill(timerService.isRunning ? Color.orange : Color.green)
+                            Capsule().fill(timerService.isRunning ? OpenNotchTheme.accentOrange : OpenNotchTheme.accentGreen)
                         )
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color.black)
                     }
                     .buttonStyle(.plain)
                     
@@ -126,8 +126,9 @@ public struct TimerWidgetView: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 13, weight: .bold))
                             .padding(7)
-                            .background(Circle().fill(Color.white.opacity(0.12)))
-                            .foregroundStyle(.white)
+                            .background(Circle().fill(OpenNotchTheme.cardBackground))
+                            .overlay(Circle().strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1))
+                            .foregroundStyle(OpenNotchTheme.textPrimary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -135,13 +136,13 @@ public struct TimerWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
-                .background(Color.white.opacity(0.15))
+                .background(OpenNotchTheme.subtleDivider)
             
-            // Preset Quick Buttons (Pomodoro, Breaks)
+            // Preset Quick Buttons
             VStack(alignment: .leading, spacing: 8) {
                 Text("Quick Presets")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(OpenNotchTheme.textSecondary)
                 
                 HStack(spacing: 8) {
                     PresetButton(title: "Pomodoro", duration: "25m", minutes: 25)
@@ -170,17 +171,21 @@ public struct PresetButton: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(OpenNotchTheme.textSecondary)
                 
                 Text(duration)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(Color.purple)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.08))
+                    .fill(OpenNotchTheme.cardBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

@@ -18,41 +18,41 @@ public struct UpcomingEventsWidgetView: View {
                 HStack {
                     Image(systemName: "calendar")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(Color.pink)
                     
                     Text(dateFormatter.string(from: Date()))
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(OpenNotchTheme.textPrimary)
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
                     EventRow(
                         title: "Team Standup & Sprint Sync",
                         time: "10:30 AM",
-                        tagColor: .purple
+                        tagColor: Color.purple
                     )
                     EventRow(
                         title: "OpenNotch Architecture Review",
                         time: "2:00 PM",
-                        tagColor: .cyan
+                        tagColor: OpenNotchTheme.accentCyan
                     )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
-                .background(Color.white.opacity(0.15))
+                .background(OpenNotchTheme.subtleDivider)
             
             // Quick Scratchpad Note
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Image(systemName: "note.text")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Color.yellow)
                     
                     Text("Quick Scratchpad")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(OpenNotchTheme.textPrimary)
                     
                     Spacer()
                     
@@ -61,7 +61,7 @@ public struct UpcomingEventsWidgetView: View {
                             quickNote = ""
                         }
                         .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(OpenNotchTheme.textTertiary)
                         .buttonStyle(.plain)
                     }
                 }
@@ -72,9 +72,13 @@ public struct UpcomingEventsWidgetView: View {
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(0.08))
+                            .fill(OpenNotchTheme.inputBackground)
                     )
-                    .foregroundStyle(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                    )
+                    .foregroundStyle(OpenNotchTheme.textPrimary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -94,20 +98,24 @@ public struct EventRow: View {
             
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(OpenNotchTheme.textPrimary)
                 .lineLimit(1)
             
             Spacer()
             
             Text(time)
                 .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(OpenNotchTheme.textSecondary)
         }
-        .padding(.vertical, 3)
-        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color.white.opacity(0.05))
+                .fill(OpenNotchTheme.cardBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
         )
     }
 }

@@ -7,22 +7,26 @@ public struct NowPlayingWidgetView: View {
     
     public var body: some View {
         HStack(spacing: 16) {
-            // Album Art or App Icon
+            // Album Art / Music Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.5)],
+                            colors: [Color(red: 40/255, green: 20/255, blue: 60/255), Color(red: 20/255, green: 20/255, blue: 35/255)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 72, height: 72)
-                    .shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                    .shadow(color: Color.purple.opacity(0.25), radius: 10, x: 0, y: 4)
                 
                 Image(systemName: mediaService.currentTrack.isPlaying ? "music.note" : "waveform")
                     .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(OpenNotchTheme.silverIconGradient)
             }
             
             // Track Info & Progress
@@ -30,13 +34,13 @@ public struct NowPlayingWidgetView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(mediaService.currentTrack.title)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(OpenNotchTheme.textPrimary)
                             .lineLimit(1)
                         
                         Text(mediaService.currentTrack.artist)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(OpenNotchTheme.textSecondary)
                             .lineLimit(1)
                     }
                     
@@ -44,7 +48,7 @@ public struct NowPlayingWidgetView: View {
                     
                     VisualizerBarView(
                         levels: mediaService.visualizerLevels,
-                        barColor: mediaService.currentTrack.isPlaying ? Color.green : Color.white.opacity(0.4)
+                        barColor: mediaService.currentTrack.isPlaying ? OpenNotchTheme.accentGreen : Color.white.opacity(0.3)
                     )
                 }
                 
@@ -54,20 +58,21 @@ public struct NowPlayingWidgetView: View {
                     .tint(.purple)
                 
                 // Controls
-                HStack(spacing: 18) {
+                HStack(spacing: 16) {
                     Text(mediaService.currentTrack.sourceApp)
                         .font(.system(size: 10, weight: .semibold))
-                        .padding(.horizontal, 6)
+                        .padding(.horizontal, 7)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.white.opacity(0.15)))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .background(Capsule().fill(OpenNotchTheme.cardBackground))
+                        .overlay(Capsule().strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 0.8))
+                        .foregroundStyle(OpenNotchTheme.textSecondary)
                     
                     Spacer()
                     
                     Button(action: { mediaService.previousTrack() }) {
                         Image(systemName: "backward.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(OpenNotchTheme.silverIconGradient)
                     }
                     .buttonStyle(.plain)
                     
@@ -79,7 +84,7 @@ public struct NowPlayingWidgetView: View {
                             
                             Image(systemName: mediaService.currentTrack.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(Color.black)
                                 .offset(x: mediaService.currentTrack.isPlaying ? 0 : 1)
                         }
                     }
@@ -88,12 +93,20 @@ public struct NowPlayingWidgetView: View {
                     Button(action: { mediaService.nextTrack() }) {
                         Image(systemName: "forward.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(OpenNotchTheme.silverIconGradient)
                     }
                     .buttonStyle(.plain)
                 }
             }
         }
-        .padding(.horizontal, 4)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(OpenNotchTheme.cardBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+        )
     }
 }

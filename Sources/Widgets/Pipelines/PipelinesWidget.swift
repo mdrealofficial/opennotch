@@ -29,7 +29,7 @@ public struct PipelinesWidgetView: View {
                 title: "Dark / Light Mode",
                 subtitle: "Toggle system appearance",
                 icon: "circle.righthalf.filled",
-                color: .indigo
+                color: Color.indigo
             ) {
                 toggleAppearance()
             },
@@ -37,7 +37,7 @@ public struct PipelinesWidgetView: View {
                 title: "Take Screenshot",
                 subtitle: "Interactive capture to clipboard",
                 icon: "camera.viewfinder",
-                color: .pink
+                color: Color.pink
             ) {
                 takeScreenshot()
             },
@@ -45,7 +45,7 @@ public struct PipelinesWidgetView: View {
                 title: "Lock Screen",
                 subtitle: "Instantly lock Mac",
                 icon: "lock.fill",
-                color: .orange
+                color: Color.orange
             ) {
                 lockScreen()
             },
@@ -53,7 +53,7 @@ public struct PipelinesWidgetView: View {
                 title: "Empty Trash",
                 subtitle: "Clean temporary waste",
                 icon: "trash.fill",
-                color: .red
+                color: Color.red
             ) {
                 emptyTrash()
             }
@@ -65,14 +65,14 @@ public struct PipelinesWidgetView: View {
             HStack {
                 Label("Shortcuts & Pipelines Runner", systemImage: "bolt.fill")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(OpenNotchTheme.textPrimary)
                 
                 Spacer()
                 
                 if let msg = statusMessage {
                     Text(msg)
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(OpenNotchTheme.accentGreen)
                         .transition(.opacity)
                 }
             }
@@ -93,7 +93,7 @@ public struct PipelinesWidgetView: View {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(item.color.opacity(0.2))
+                                    .fill(item.color.opacity(0.18))
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: item.icon)
@@ -104,11 +104,11 @@ public struct PipelinesWidgetView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.title)
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(OpenNotchTheme.textPrimary)
                                 
                                 Text(item.subtitle)
                                     .font(.system(size: 9, weight: .regular))
-                                    .foregroundStyle(.white.opacity(0.6))
+                                    .foregroundStyle(OpenNotchTheme.textSecondary)
                                     .lineLimit(1)
                             }
                             
@@ -117,11 +117,11 @@ public struct PipelinesWidgetView: View {
                         .padding(8)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(OpenNotchTheme.cardBackground)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
