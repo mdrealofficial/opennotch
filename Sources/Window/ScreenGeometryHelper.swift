@@ -14,27 +14,26 @@ public struct NotchScreenInfo {
         let topInset = screen.safeAreaInsets.top
         if topInset > 0 {
             self.hasPhysicalNotch = true
-            self.notchHeight = max(topInset, NotchConstants.defaultCompactHeight)
-            // MacBook notch is typically ~210-230 points wide
+            self.notchHeight = max(topInset, 34)
             self.notchWidth = 220
         } else {
             self.hasPhysicalNotch = false
-            self.notchHeight = NotchConstants.defaultCompactHeight
-            self.notchWidth = NotchConstants.defaultCompactWidth
+            self.notchHeight = 32
+            self.notchWidth = 220
         }
     }
     
     public func compactFrame(customWidth: CGFloat? = nil, customHeight: CGFloat? = nil) -> NSRect {
-        let width = customWidth ?? notchWidth
-        let height = customHeight ?? notchHeight
-        let x = screenFrame.midX - (width / 2)
+        let width = customWidth ?? (hasPhysicalNotch ? notchWidth : 220)
+        let height = customHeight ?? (hasPhysicalNotch ? notchHeight : 32)
+        let x = floor(screenFrame.midX - (width / 2))
         let y = screenFrame.maxY - height
         return NSRect(x: x, y: y, width: width, height: height)
     }
     
     public func expandedFrame(expandedWidth: CGFloat = NotchConstants.defaultExpandedWidth,
                               expandedHeight: CGFloat = NotchConstants.defaultExpandedHeight) -> NSRect {
-        let x = screenFrame.midX - (expandedWidth / 2)
+        let x = floor(screenFrame.midX - (expandedWidth / 2))
         let y = screenFrame.maxY - expandedHeight
         return NSRect(x: x, y: y, width: expandedWidth, height: expandedHeight)
     }
@@ -42,6 +41,7 @@ public struct NotchScreenInfo {
 
 public enum ScreenGeometryHelper {
     public static func mainScreenInfo() -> NotchScreenInfo {
+        // Find screen with notch or the main interactive screen
         let targetScreen = NSScreen.screens.first { screen in
             screen.safeAreaInsets.top > 0
         } ?? NSScreen.main ?? NSScreen.screens[0]

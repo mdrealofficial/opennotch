@@ -26,7 +26,7 @@ public struct NotchContainerView: View {
     }
     
     public var body: some View {
-        ZStack(alignment: .top) {
+        VStack(spacing: 0) {
             if windowManager.isExpanded {
                 expandedDropdown
                     .transition(.asymmetric(
@@ -38,13 +38,15 @@ public struct NotchContainerView: View {
                     .transition(.opacity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .ignoresSafeArea()
         .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: windowManager.isExpanded)
         .onHover { hovering in
             handleHover(hovering)
         }
     }
     
-    // MARK: - 1. Compact Notch Bar (Resting attached to MacBook Notch)
+    // MARK: - 1. Compact Notch Bar (Resting attached to Screen Top Bezel)
     private var compactNotchBar: some View {
         HStack(spacing: 8) {
             // Left Live Status
@@ -98,10 +100,10 @@ public struct NotchContainerView: View {
                 .foregroundStyle(.white.opacity(0.6))
             }
         }
-        .padding(.horizontal, 16)
-        .frame(width: NotchConstants.defaultCompactWidth, height: NotchConstants.defaultCompactHeight)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            NotchShape(earRadius: 6, cornerRadius: NotchConstants.notchCornerRadius)
+            NotchShape(earRadius: 6, cornerRadius: 14)
                 .fill(Color.black)
         )
         .contentShape(Rectangle())
@@ -112,7 +114,7 @@ public struct NotchContainerView: View {
         }
     }
     
-    // MARK: - 2. Expanded Notch Dropdown (Exact NotchNook Organic Shape & Layout)
+    // MARK: - 2. Expanded Notch Dropdown
     private var expandedDropdown: some View {
         VStack(spacing: 6) {
             // Top Bar: [🪄 Nook | 📦 Tray] ................ [⚙️]
@@ -152,7 +154,7 @@ public struct NotchContainerView: View {
                 
                 Spacer()
                 
-                // Settings Gear Icon (Opens Dedicated Settings Window)
+                // Settings Gear Icon
                 Button(action: {
                     SettingsWindowManager.shared.openSettings()
                 }) {
@@ -175,15 +177,15 @@ public struct NotchContainerView: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 10)
-        .frame(width: NotchConstants.defaultExpandedWidth, height: NotchConstants.defaultExpandedHeight)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            NotchShape(earRadius: 12, cornerRadius: NotchConstants.expandedCornerRadius)
+            NotchShape(earRadius: 12, cornerRadius: 22)
                 .fill(Color.black)
                 .shadow(color: Color.black.opacity(0.7), radius: 24, x: 0, y: 12)
         )
     }
     
-    // MARK: - Nook Mode (3-Section Layout: Media | Shortcuts | Mirror)
+    // MARK: - Nook Mode
     private var nookContentView: some View {
         HStack(spacing: 16) {
             // Left: Media Player
@@ -310,7 +312,7 @@ public struct NotchContainerView: View {
         .padding(.top, 2)
     }
     
-    // MARK: - Tray Mode (Photo 4 Exact Layout)
+    // MARK: - Tray Mode
     private var trayContentView: some View {
         VStack(spacing: 8) {
             if shelfManager.files.isEmpty {
