@@ -3,210 +3,153 @@ import AppKit
 import Combine
 
 public struct MediaTrackInfo: Equatable {
-    public var title: String = "Not Playing"
-    public var artist: String = "Apple Music / Spotify"
-    public var album: String = ""
-    public var isPlaying: Bool = false
-    public var duration: Double = 0
-    public var position: Double = 0
-    public var artwork: NSImage? = nil
-    public var sourceApp: String = "Music"
+    public let title: String
+    public let artist: String
+    public let album: String
+    public let isPlaying: Bool
+    public let artworkData: Data?
+    public let duration: Double
+    public let position: Double
     
-    public static let placeholder = MediaTrackInfo(
-        title: "No Media Playing",
-        artist: "Play audio in Apple Music or Spotify",
-        album: "OpenNotch Media Hub",
-        isPlaying: false,
-        duration: 180,
-        position: 0,
-        artwork: nil,
-        sourceApp: "System"
-    )
+    public init(title: String = "", artist: String = "", album: String = "", isPlaying: Bool = false, artworkData: Data? = nil, duration: Double = 0, position: Double = 0) {
+        self.title = title
+        self.artist = artist
+        self.album = album
+        self.isPlaying = isPlaying
+        self.artworkData = artworkData
+        self.duration = duration
+        self.position = position
+    }
 }
+
+// MediaRemote C function signatures
+private typealias MRMediaRemoteGetNowPlayingInfoFunction = @convention(c) (DispatchQueue, @escaping (NSDictionary?) -> Void) -> Void
+private typealias MRMediaRemoteGetNowPlayingApplicationIsPlayingFunction = @convention(c) (DispatchQueue, @escaping (Bool) -> Void) -> Void
+private typealias MRMediaRemoteSendCommandFunction = @convention(c) (Int32, AnyObject?) -> Bool
 
 public final class MediaRemoteService: ObservableObject {
     public static let shared = MediaRemoteService()
     
-    @Published public private(set) var currentTrack: MediaTrackInfo = .placeholder
-    @Published public var visualizerLevels: [CGFloat] = [0.2, 0.4, 0.6, 0.3, 0.7, 0.5, 0.3, 0.8]
+    @Published public var currentTrack = MediaTrackInfo()
+    @Published public var visualizerLevels: [CGFloat] = [0.3, 0.6, 0.8, 0.4]
     
     private var timer: AnyCancellable?
     private var visualizerTimer: AnyCancellable?
+    private var mediaRemoteHandle: UnsafeMutableRawPointer?
+    
+    private var getNowPlayingInfo: MRMediaRemoteGetNowPlayingInfoFunction?
+    private var getIsPlaying: MRMediaRemoteGetNowPlayingApplicationIsPlayingFunction?
+    private var sendCommand: MRMediaRemoteSendCommandFunction?
     
     private init() {
+        loadMediaRemote()
         startPolling()
-        startVisualizerSimulation()
+        startVisualizer()
     }
     
-    public func startPolling() {
-        timer = Timer.publish(every: 1.5, on: .main, in: .common)
+    private func loadMediaRemote() {
+        let path = "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote"
+        mediaRemoteHandle = dlopen(path, RTLD_NOW)
+        guard let handle = mediaRemoteHandle else {
+            print("MediaRemote: Unable to load framework")
+            return
+        }
+        
+        if let ptr = dlsym(handle, "MRMediaRemoteGetNowPlayingInfo") {
+            getNowPlayingInfo = unsafeBitCast(ptr, to: MRMediaRemoteGetNowPlayingInfoFunction.self)
+        }
+        if let ptr = dlsym(handle, "MRMediaRemoteGetNowPlayingApplicationIsPlaying") {
+            getIsPlaying = unsafeBitCast(ptr, to: MRMediaRemoteGetNowPlayingApplicationIsPlayingFunction.self)
+        }
+        if let ptr = dlsym(handle, "MRMediaRemoteSendCommand") {
+            sendCommand = unsafeBitCast(ptr, to: MRMediaRemoteSendCommandFunction.self)
+        }
+    }
+    
+    private func startPolling() {
+        timer = Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                self?.refreshTrackInfo()
+                self?.fetchMediaState()
             }
-        refreshTrackInfo()
+        fetchMediaState()
     }
     
-    public func refreshTrackInfo() {
-        // Check Apple Music
-        if let musicInfo = fetchAppleMusicTrack() {
-            DispatchQueue.main.async {
-                self.currentTrack = musicInfo
+    private func startVisualizer() {
+        visualizerTimer = Timer.publish(every: 0.15, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                if self.currentTrack.isPlaying {
+                    self.visualizerLevels = [
+                        CGFloat.random(in: 0.2...1.0),
+                        CGFloat.random(in: 0.4...1.0),
+                        CGFloat.random(in: 0.3...0.9),
+                        CGFloat.random(in: 0.5...1.0)
+                    ]
+                } else {
+                    self.visualizerLevels = [0.2, 0.2, 0.2, 0.2]
+                }
             }
-            return
-        }
+    }
+    
+    public func fetchMediaState() {
+        guard let getNowPlayingInfo = getNowPlayingInfo,
+              let getIsPlaying = getIsPlaying else { return }
         
-        // Check Spotify
-        if let spotifyInfo = fetchSpotifyTrack() {
-            DispatchQueue.main.async {
-                self.currentTrack = spotifyInfo
-            }
-            return
-        }
-        
-        // Fallback default
-        if currentTrack.title != "No Media Playing" && !currentTrack.isPlaying {
-            DispatchQueue.main.async {
-                self.currentTrack = .placeholder
+        getIsPlaying(DispatchQueue.main) { [weak self] playing in
+            guard let self = self else { return }
+            
+            getNowPlayingInfo(DispatchQueue.main) { infoDict in
+                guard let dict = infoDict else {
+                    if self.currentTrack.isPlaying != playing {
+                        self.currentTrack = MediaTrackInfo(isPlaying: playing)
+                    }
+                    return
+                }
+                
+                let title = dict["kMRMediaRemoteNowPlayingInfoTitle"] as? String ?? ""
+                let artist = dict["kMRMediaRemoteNowPlayingInfoArtist"] as? String ?? ""
+                let album = dict["kMRMediaRemoteNowPlayingInfoAlbum"] as? String ?? ""
+                let artworkData = dict["kMRMediaRemoteNowPlayingInfoArtworkData"] as? Data
+                let duration = dict["kMRMediaRemoteNowPlayingInfoDuration"] as? Double ?? 0
+                let position = dict["kMRMediaRemoteNowPlayingInfoElapsedTime"] as? Double ?? 0
+                
+                let track = MediaTrackInfo(
+                    title: title.isEmpty ? (playing ? "Playing Audio" : "") : title,
+                    artist: artist,
+                    album: album,
+                    isPlaying: playing,
+                    artworkData: artworkData,
+                    duration: duration,
+                    position: position
+                )
+                
+                if self.currentTrack != track {
+                    self.currentTrack = track
+                }
             }
         }
     }
     
     public func togglePlayPause() {
-        if isAppRunning("com.apple.Music") {
-            runAppleScript("""
-            tell application "Music"
-                playpause
-            end tell
-            """)
-        } else if isAppRunning("com.spotify.client") {
-            runAppleScript("""
-            tell application "Spotify"
-                playpause
-            end tell
-            """)
+        _ = sendCommand?(0, nil) // 0 = TogglePlayPause
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.fetchMediaState()
         }
-        refreshTrackInfo()
     }
     
     public func nextTrack() {
-        if isAppRunning("com.apple.Music") {
-            runAppleScript("""
-            tell application "Music" to next track
-            """)
-        } else if isAppRunning("com.spotify.client") {
-            runAppleScript("""
-            tell application "Spotify" to next track
-            """)
+        _ = sendCommand?(4, nil) // 4 = NextTrack
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.fetchMediaState()
         }
-        refreshTrackInfo()
     }
     
     public func previousTrack() {
-        if isAppRunning("com.apple.Music") {
-            runAppleScript("""
-            tell application "Music" to previous track
-            """)
-        } else if isAppRunning("com.spotify.client") {
-            runAppleScript("""
-            tell application "Spotify" to previous track
-            """)
+        _ = sendCommand?(5, nil) // 5 = PreviousTrack
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.fetchMediaState()
         }
-        refreshTrackInfo()
-    }
-    
-    private func fetchAppleMusicTrack() -> MediaTrackInfo? {
-        guard isAppRunning("com.apple.Music") else { return nil }
-        
-        let script = """
-        tell application "Music"
-            if player state is playing or player state is paused then
-                set trackName to name of current track
-                set artistName to artist of current track
-                set albumName to album of current track
-                set isPlay to (player state is playing)
-                set curPos to player position
-                set trackDur to duration of current track
-                return trackName & "||" & artistName & "||" & albumName & "||" & (isPlay as text) & "||" & (curPos as text) & "||" & (trackDur as text)
-            end if
-        end tell
-        """
-        guard let output = runAppleScript(script), !output.isEmpty else { return nil }
-        let parts = output.components(separatedBy: "||")
-        guard parts.count >= 6 else { return nil }
-        
-        return MediaTrackInfo(
-            title: parts[0],
-            artist: parts[1],
-            album: parts[2],
-            isPlaying: parts[3].lowercased() == "true",
-            duration: Double(parts[5]) ?? 180,
-            position: Double(parts[4]) ?? 0,
-            artwork: nil,
-            sourceApp: "Apple Music"
-        )
-    }
-    
-    private func fetchSpotifyTrack() -> MediaTrackInfo? {
-        guard isAppRunning("com.spotify.client") else { return nil }
-        
-        let script = """
-        tell application "Spotify"
-            if player state is playing or player state is paused then
-                set trackName to name of current track
-                set artistName to artist of current track
-                set albumName to album of current track
-                set isPlay to (player state is playing)
-                set curPos to player position
-                set trackDur to (duration of current track) / 1000
-                return trackName & "||" & artistName & "||" & albumName & "||" & (isPlay as text) & "||" & (curPos as text) & "||" & (trackDur as text)
-            end if
-        end tell
-        """
-        guard let output = runAppleScript(script), !output.isEmpty else { return nil }
-        let parts = output.components(separatedBy: "||")
-        guard parts.count >= 6 else { return nil }
-        
-        return MediaTrackInfo(
-            title: parts[0],
-            artist: parts[1],
-            album: parts[2],
-            isPlaying: parts[3].lowercased() == "true",
-            duration: Double(parts[5]) ?? 180,
-            position: Double(parts[4]) ?? 0,
-            artwork: nil,
-            sourceApp: "Spotify"
-        )
-    }
-    
-    private func isAppRunning(_ bundleId: String) -> Bool {
-        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first != nil
-    }
-    
-    @discardableResult
-    private func runAppleScript(_ source: String) -> String? {
-        var error: NSDictionary?
-        if let scriptObject = NSAppleScript(source: source) {
-            let output = scriptObject.executeAndReturnError(&error)
-            if error == nil {
-                return output.stringValue
-            }
-        }
-        return nil
-    }
-    
-    private func startVisualizerSimulation() {
-        visualizerTimer = Timer.publish(every: 0.12, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self = self else { return }
-                if self.currentTrack.isPlaying {
-                    self.visualizerLevels = (0..<8).map { _ in
-                        CGFloat.random(in: 0.15...0.95)
-                    }
-                } else {
-                    self.visualizerLevels = Array(repeating: 0.1, count: 8)
-                }
-            }
     }
 }
