@@ -110,6 +110,17 @@ public struct SettingsView: View {
             Divider()
             
             HStack {
+                Text("Display on screens:")
+                    .frame(width: 150, alignment: .trailing)
+                Picker("", selection: $prefs.screenDisplayModeRaw) {
+                    ForEach(ScreenDisplayMode.allCases) { opt in
+                        Text(opt.rawValue).tag(opt.rawValue)
+                    }
+                }
+                .frame(width: 210)
+            }
+            
+            HStack {
                 Text("Show in fullscreen:")
                     .frame(width: 150, alignment: .trailing)
                 Picker("", selection: $prefs.fullscreenVisibilityRaw) {
@@ -117,7 +128,7 @@ public struct SettingsView: View {
                         Text(opt.rawValue).tag(opt.rawValue)
                     }
                 }
-                .frame(width: 190)
+                .frame(width: 210)
             }
             
             HStack {

@@ -27,11 +27,20 @@ public enum LiveVisualizerEffect: String, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
+public enum ScreenDisplayMode: String, CaseIterable, Identifiable {
+    case allScreens = "All Connected Displays"
+    case mainOnly = "Main Screen Only"
+    case followCursor = "Active Screen (Follow Cursor)"
+    
+    public var id: String { rawValue }
+}
+
 public final class UserPreferences: ObservableObject {
     public static let shared = UserPreferences()
     
     // MARK: - General Tab
     @AppStorage("launchAtLogin") public var launchAtLogin: Bool = false
+    @AppStorage("screenDisplayMode") public var screenDisplayModeRaw: String = ScreenDisplayMode.allScreens.rawValue
     @AppStorage("fullscreenVisibility") public var fullscreenVisibilityRaw: String = FullscreenVisibilityOption.notchedOnly.rawValue
     @AppStorage("mediaSource") public var mediaSourceRaw: String = MediaSourceOption.system.rawValue
     
