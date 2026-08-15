@@ -3,9 +3,9 @@ import SwiftUI
 import Combine
 
 public enum NotchState {
-    case compact   // State 1: Normal minimal resting notch
-    case peek      // State 2: On Hover slight extension
-    case expanded  // State 3: On Click full Nook / Tray hub
+    case compact   // State 1: Normal minimal resting notch (170 x 12)
+    case peek      // State 2: On Hover peek pill (220 x 36)
+    case expanded  // State 3: On Click full Nook / Tray hub (580 x 165)
 }
 
 public final class NotchPanelController: ObservableObject, Identifiable {
@@ -15,23 +15,60 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     @Published public var state: NotchState = .compact
     @Published public var isHovered: Bool = false
     
+    private var globalEventMonitor: Any?
+    
     public var isExpanded: Bool {
         state == .expanded
     }
     
     public init(screen: NSScreen) {
         self.screen = screen
-        let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
-        let frame = screenInfo.windowFrame()
-        self.panel = NotchPanel(contentRect: frame)
+        let initialFrame = Self.frame(for: .compact, on: screen)
+        self.panel = NotchPanel(contentRect: initialFrame)
+        self.updateFrame()
+        self.setupMouseTracking()
+    }
+    
+    deinit {
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+    }
+    
+    public static func frame(for state: NotchState, on screen: NSScreen) -> NSRect {
+        let screenFrame = screen.frame
+        let width: CGFloat
+        let height: CGFloat
+        
+        switch state {
+        case .compact:
+            width = 170
+            height = 12
+        case .peek:
+            width = NotchConstants.defaultCompactWidth + 10 // 230
+            height = NotchConstants.defaultCompactHeight + 8 // 42
+        case .expanded:
+            width = NotchConstants.defaultExpandedWidth + 16 // 596
+            height = NotchConstants.defaultExpandedHeight + 16 // 171
+        }
+        
+        let x = floor(screenFrame.midX - (width / 2))
+        let y = screenFrame.maxY - height
+        return NSRect(x: x, y: y, width: width, height: height)
+    }
+    
+    public func updateFrame() {
+        let targetFrame = Self.frame(for: state, on: screen)
+        panel.setFrame(targetFrame, display: true)
     }
     
     public func setHovered(_ hovered: Bool) {
         self.isHovered = hovered
         if state != .expanded {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.88)) {
                 self.state = hovered ? .peek : .compact
             }
+            self.updateFrame()
         }
     }
     
@@ -39,12 +76,14 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.state = .expanded
         }
+        self.updateFrame()
     }
     
     public func collapse() {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.state = self.isHovered ? .peek : .compact
         }
+        self.updateFrame()
     }
     
     public func toggleExpanded() {
@@ -54,6 +93,32 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             expand()
         }
     }
+    
+    private func setupMouseTracking() {
+        // Global mouse move monitor to reliably detect entering/leaving notch without taking over screen clicks
+        globalEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.checkMousePosition(event.locationInWindow)
+            return event
+        }
+    }
+    
+    private func checkMousePosition(_ location: NSPoint) {
+        // If expanded, let view hover handle closing
+        guard state != .expanded else { return }
+        
+        let mouseScreenPoint = NSEvent.mouseLocation
+        let peekRect = Self.frame(for: .peek, on: screen)
+        
+        if NSPointInRect(mouseScreenPoint, peekRect) {
+            if !isHovered {
+                setHovered(true)
+            }
+        } else {
+            if isHovered {
+                setHovered(false)
+            }
+        }
+    }
 }
 
 public final class NotchWindowManager: ObservableObject {
@@ -61,9 +126,17 @@ public final class NotchWindowManager: ObservableObject {
     
     private var controllers: [NotchPanelController] = []
     private var cancellables = Set<AnyCancellable>()
+    private var globalMouseMonitor: Any?
     
     private init() {
         setupNotifications()
+        setupGlobalMonitor()
+    }
+    
+    deinit {
+        if let monitor = globalMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
     }
     
     public func setup() {
@@ -100,11 +173,10 @@ public final class NotchWindowManager: ObservableObject {
         
         for screen in targetScreens {
             let controller = NotchPanelController(screen: screen)
-            let hostingView = NotchPassThroughHostingView(rootView: NotchContainerView(panelController: controller))
-            hostingView.panelController = controller
+            let hostingView = NSHostingView(rootView: NotchContainerView(panelController: controller))
             hostingView.autoresizingMask = [.width, .height]
             controller.panel.contentView = hostingView
-            controller.panel.setFrame(ScreenGeometryHelper.screenInfo(for: screen).windowFrame(), display: true)
+            controller.updateFrame()
             controller.panel.orderFrontRegardless()
             
             controllers.append(controller)
@@ -130,7 +202,23 @@ public final class NotchWindowManager: ObservableObject {
         activeController()?.toggleExpanded()
     }
     
-    public func updatePanelFrames(animated: Bool = true) {}
+    private func setupGlobalMonitor() {
+        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+            guard let self = self else { return }
+            let mouseLoc = NSEvent.mouseLocation
+            for controller in self.controllers {
+                if controller.state != .expanded {
+                    let peekRect = NotchPanelController.frame(for: .peek, on: controller.screen)
+                    let inRect = NSPointInRect(mouseLoc, peekRect)
+                    if inRect && !controller.isHovered {
+                        controller.setHovered(true)
+                    } else if !inRect && controller.isHovered {
+                        controller.setHovered(false)
+                    }
+                }
+            }
+        }
+    }
     
     private func setupNotifications() {
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
