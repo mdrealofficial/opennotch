@@ -8,19 +8,23 @@ public struct TabPillButton: View {
     
     public var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                 Text(tab.rawValue)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
             .background(
                 Capsule()
-                    .fill(isSelected ? Color.white.opacity(0.2) : Color.clear)
+                    .fill(isSelected ? Color(red: 44/255, green: 44/255, blue: 48/255) : Color.clear)
             )
-            .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.6))
+            .overlay(
+                Capsule()
+                    .strokeBorder(isSelected ? Color.white.opacity(0.15) : Color.clear, lineWidth: 0.8)
+            )
+            .foregroundStyle(isSelected ? Color.white : Color(white: 0.6))
         }
         .buttonStyle(.plain)
     }
@@ -213,26 +217,26 @@ public struct NotchContainerView: View {
     private var expandedBackground: some View {
         ZStack {
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(Color.black.opacity(0.88))
+                .fill(Color(red: 12/255, green: 12/255, blue: 14/255).opacity(0.98))
             
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(.ultraThinMaterial.opacity(0.4))
             
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.25),
-                            Color.white.opacity(0.05),
-                            Color.black.opacity(0.4)
+                            Color.white.opacity(0.18),
+                            Color.white.opacity(0.04),
+                            Color.white.opacity(0.08)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1.2
+                    lineWidth: 1.0
                 )
         }
-        .shadow(color: Color.black.opacity(0.5), radius: 24, x: 0, y: 12)
+        .shadow(color: Color.black.opacity(0.6), radius: 28, x: 0, y: 14)
     }
     
     // MARK: - Hover Handlers

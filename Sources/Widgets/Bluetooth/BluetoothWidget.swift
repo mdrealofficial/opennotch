@@ -116,10 +116,16 @@ public struct AccessoryCard: View {
     let device: ConnectedAccessory
     
     public var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Image(systemName: device.iconName)
                 .font(.system(size: 26))
-                .foregroundStyle(Color.cyan)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.white, Color(white: 0.78)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .frame(height: 32)
             
             Text(device.name)
@@ -127,25 +133,25 @@ public struct AccessoryCard: View {
                 .foregroundStyle(.white)
                 .lineLimit(1)
             
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Circle()
-                    .fill(device.batteryLevel > 20 ? Color.green : Color.red)
+                    .fill(device.batteryLevel > 20 ? Color(red: 52/255, green: 199/255, blue: 89/255) : Color(red: 255/255, green: 59/255, blue: 48/255))
                     .frame(width: 6, height: 6)
                 
                 Text("\(device.batteryLevel)%")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(.white.opacity(0.9))
             }
         }
-        .padding(10)
+        .padding(12)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.08))
+                .fill(Color(red: 24/255, green: 24/255, blue: 28/255))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
 }
