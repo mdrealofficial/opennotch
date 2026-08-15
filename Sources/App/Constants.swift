@@ -1,17 +1,17 @@
 import SwiftUI
 
 public enum NotchConstants {
-    public static let defaultCompactWidth: CGFloat = 210
+    public static let defaultCompactWidth: CGFloat = 220
     public static let defaultCompactHeight: CGFloat = 34
     
-    public static let defaultExpandedWidth: CGFloat = 620
-    public static let defaultExpandedHeight: CGFloat = 270
+    public static let defaultExpandedWidth: CGFloat = 580
+    public static let defaultExpandedHeight: CGFloat = 155
     
-    public static let notchCornerRadius: CGFloat = 18
-    public static let expandedCornerRadius: CGFloat = 28
+    public static let notchCornerRadius: CGFloat = 14
+    public static let expandedCornerRadius: CGFloat = 22
     
-    public static let springResponse: Double = 0.36
-    public static let springDamping: Double = 0.82
+    public static let springResponse: Double = 0.32
+    public static let springDamping: Double = 0.84
     
     public static let hoverDelay: Double = 0.15
     public static let autoCloseDelay: Double = 0.4

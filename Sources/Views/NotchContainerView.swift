@@ -30,21 +30,21 @@ public struct NotchContainerView: View {
             if windowManager.isExpanded {
                 expandedDropdown
                     .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
-                        removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
+                        insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)),
+                        removal: .opacity.combined(with: .scale(scale: 0.97, anchor: .top))
                     ))
             } else {
                 compactNotchBar
                     .transition(.opacity)
             }
         }
-        .animation(.spring(response: 0.32, dampingFraction: 0.84), value: windowManager.isExpanded)
+        .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: windowManager.isExpanded)
         .onHover { hovering in
             handleHover(hovering)
         }
     }
     
-    // MARK: - Compact Notch Bar (Resting attached to MacBook Notch)
+    // MARK: - 1. Compact Notch Bar (Resting attached to MacBook Notch)
     private var compactNotchBar: some View {
         HStack(spacing: 8) {
             // Left Live Status
@@ -98,38 +98,38 @@ public struct NotchContainerView: View {
                 .foregroundStyle(.white.opacity(0.6))
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(width: NotchConstants.defaultCompactWidth, height: NotchConstants.defaultCompactHeight)
         .background(
-            RoundedRectangle(cornerRadius: NotchConstants.notchCornerRadius, style: .continuous)
+            NotchShape(earRadius: 6, cornerRadius: NotchConstants.notchCornerRadius)
                 .fill(Color.black)
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
+            withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
                 windowManager.toggleExpanded()
             }
         }
     }
     
-    // MARK: - Expanded Notch Dropdown (Photo 2 & 4 Exact Layout)
+    // MARK: - 2. Expanded Notch Dropdown (Exact NotchNook Organic Shape & Layout)
     private var expandedDropdown: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             // Top Bar: [🪄 Nook | 📦 Tray] ................ [⚙️]
             HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
                             viewMode = .nook
                         }
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Image(systemName: "lamp.desk.fill")
                                 .font(.system(size: 11))
                             Text("Nook")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(viewMode == .nook ? Color.white : Color.white.opacity(0.45))
+                        .foregroundStyle(viewMode == .nook ? Color.white : Color.white.opacity(0.40))
                     }
                     .buttonStyle(.plain)
                     
@@ -138,21 +138,21 @@ public struct NotchContainerView: View {
                             viewMode = .tray
                         }
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Image(systemName: "tray.fill")
                                 .font(.system(size: 11))
                             Text("Tray")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                         }
-                        .foregroundStyle(viewMode == .tray ? Color.white : Color.white.opacity(0.45))
+                        .foregroundStyle(viewMode == .tray ? Color.white : Color.white.opacity(0.40))
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.leading, 8)
+                .padding(.leading, 18)
                 
                 Spacer()
                 
-                // Settings Gear Icon (Opens Dedicated Settings Window on Click)
+                // Settings Gear Icon (Opens Dedicated Settings Window)
                 Button(action: {
                     SettingsWindowManager.shared.openSettings()
                 }) {
@@ -161,10 +161,10 @@ public struct NotchContainerView: View {
                         .foregroundStyle(Color.white.opacity(0.65))
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, 8)
+                .padding(.trailing, 18)
                 .help("Open Settings")
             }
-            .padding(.top, 4)
+            .padding(.top, 6)
             
             // Dropdown Content
             if viewMode == .nook {
@@ -173,11 +173,11 @@ public struct NotchContainerView: View {
                 trayContentView
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.bottom, 12)
-        .frame(width: 580, height: 165)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
+        .frame(width: NotchConstants.defaultExpandedWidth, height: NotchConstants.defaultExpandedHeight)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            NotchShape(earRadius: 12, cornerRadius: NotchConstants.expandedCornerRadius)
                 .fill(Color.black)
                 .shadow(color: Color.black.opacity(0.7), radius: 24, x: 0, y: 12)
         )
@@ -195,7 +195,7 @@ public struct NotchContainerView: View {
                         .frame(width: 36, height: 36)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(mediaService.currentTrack.title.isEmpty || mediaService.currentTrack.title == "No Media Playing" ? "Facebook" : mediaService.currentTrack.title)
+                        Text(mediaService.currentTrack.title.isEmpty || mediaService.currentTrack.title == "No Media Playing" ? "Apple Music" : mediaService.currentTrack.title)
                             .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.white)
                             .lineLimit(1)
@@ -224,7 +224,7 @@ public struct NotchContainerView: View {
                 
                 // Track Timeline Slider
                 VStack(spacing: 2) {
-                    ProgressView(value: 0.45)
+                    ProgressView(value: min(1.0, max(0.0, mediaService.currentTrack.duration > 0 ? mediaService.currentTrack.position / mediaService.currentTrack.duration : 0.35)))
                         .progressViewStyle(.linear)
                         .tint(.white)
                     
@@ -237,7 +237,7 @@ public struct NotchContainerView: View {
                     .foregroundStyle(.white.opacity(0.5))
                 }
             }
-            .frame(maxWidth: 200, alignment: .leading)
+            .frame(maxWidth: 190, alignment: .leading)
             
             Divider()
                 .background(Color.white.opacity(0.12))
@@ -306,8 +306,8 @@ public struct NotchContainerView: View {
             }
             .frame(maxWidth: 90)
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 4)
+        .padding(.horizontal, 10)
+        .padding(.top, 2)
     }
     
     // MARK: - Tray Mode (Photo 4 Exact Layout)
@@ -358,7 +358,7 @@ public struct NotchContainerView: View {
                 hoverTimer?.invalidate()
                 hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
                     if self.isHovering && !self.windowManager.isExpanded {
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
+                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
                             self.windowManager.expand()
                         }
                     }
@@ -372,7 +372,7 @@ public struct NotchContainerView: View {
                 autoCloseTimer?.invalidate()
                 autoCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { _ in
                     if !self.isHovering && self.windowManager.isExpanded {
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
+                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
                             self.windowManager.collapse()
                         }
                     }

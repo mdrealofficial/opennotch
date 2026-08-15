@@ -3,7 +3,7 @@ import XCTest
 
 final class OpenNotchTests: XCTestCase {
     func testConstants() {
-        XCTAssertEqual(NotchConstants.defaultCompactWidth, 210)
+        XCTAssertEqual(NotchConstants.defaultCompactWidth, 220)
         XCTAssertEqual(NotchConstants.defaultCompactHeight, 34)
         XCTAssertGreaterThan(NotchConstants.defaultExpandedWidth, NotchConstants.defaultCompactWidth)
     }
