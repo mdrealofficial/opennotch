@@ -7,9 +7,8 @@ public struct NotchScreenInfo {
     public let screenFrame: NSRect
     public let visibleFrame: NSRect
     
-    // Generous transparent shadow margin so SwiftUI drop shadows never clip
-    public static let shadowPaddingX: CGFloat = 40
-    public static let shadowPaddingBottom: CGFloat = 40
+    public static let canvasWidth: CGFloat = 660
+    public static let canvasHeight: CGFloat = 220
     
     public init(screen: NSScreen) {
         self.screenFrame = screen.frame
@@ -27,26 +26,12 @@ public struct NotchScreenInfo {
         }
     }
     
-    public func compactFrame(customWidth: CGFloat? = nil, customHeight: CGFloat? = nil) -> NSRect {
-        let contentWidth = customWidth ?? (hasPhysicalNotch ? notchWidth : 220)
-        let contentHeight = customHeight ?? (hasPhysicalNotch ? notchHeight : 34)
-        
-        let totalWidth = contentWidth + (Self.shadowPaddingX * 2)
-        let totalHeight = contentHeight + Self.shadowPaddingBottom
-        
-        let x = floor(screenFrame.midX - (totalWidth / 2))
-        let y = screenFrame.maxY - totalHeight
-        return NSRect(x: x, y: y, width: totalWidth, height: totalHeight)
-    }
-    
-    public func expandedFrame(expandedWidth: CGFloat = NotchConstants.defaultExpandedWidth,
-                              expandedHeight: CGFloat = NotchConstants.defaultExpandedHeight) -> NSRect {
-        let totalWidth = expandedWidth + (Self.shadowPaddingX * 2)
-        let totalHeight = expandedHeight + Self.shadowPaddingBottom
-        
-        let x = floor(screenFrame.midX - (totalWidth / 2))
-        let y = screenFrame.maxY - totalHeight
-        return NSRect(x: x, y: y, width: totalWidth, height: totalHeight)
+    /// Stable, fixed window frame spanning the maximum interactive area.
+    /// This prevents dynamic window frame resizes and eliminates 100% of AppKit constraint crashes.
+    public func windowFrame() -> NSRect {
+        let x = floor(screenFrame.midX - (Self.canvasWidth / 2))
+        let y = screenFrame.maxY - Self.canvasHeight
+        return NSRect(x: x, y: y, width: Self.canvasWidth, height: Self.canvasHeight)
     }
 }
 

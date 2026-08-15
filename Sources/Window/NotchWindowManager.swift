@@ -11,8 +11,8 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     public init(screen: NSScreen) {
         self.screen = screen
         let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
-        let initialFrame = screenInfo.compactFrame()
-        self.panel = NotchPanel(contentRect: initialFrame)
+        let frame = screenInfo.windowFrame()
+        self.panel = NotchPanel(contentRect: frame)
     }
     
     public func expand() {
@@ -20,7 +20,6 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.isExpanded = true
         }
-        updateFrame(animated: true)
     }
     
     public func collapse() {
@@ -28,7 +27,6 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
             self.isExpanded = false
         }
-        updateFrame(animated: true)
     }
     
     public func toggleExpanded() {
@@ -36,27 +34,6 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             collapse()
         } else {
             expand()
-        }
-    }
-    
-    public func updateFrame(animated: Bool = true) {
-        let prefs = UserPreferences.shared
-        let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
-        let targetFrame: NSRect = isExpanded
-            ? screenInfo.expandedFrame(expandedWidth: prefs.expandedWidth, expandedHeight: prefs.expandedHeight)
-            : screenInfo.compactFrame()
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            if animated {
-                NSAnimationContext.runAnimationGroup { context in
-                    context.duration = 0.28
-                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                    self.panel.animator().setFrame(targetFrame, display: true)
-                }
-            } else {
-                self.panel.setFrame(targetFrame, display: true)
-            }
         }
     }
 }
@@ -105,10 +82,11 @@ public final class NotchWindowManager: ObservableObject {
         
         for screen in targetScreens {
             let controller = NotchPanelController(screen: screen)
-            let hostingView = NSHostingView(rootView: NotchContainerView(panelController: controller))
+            let hostingView = NotchPassThroughHostingView(rootView: NotchContainerView(panelController: controller))
+            hostingView.panelController = controller
             hostingView.autoresizingMask = [.width, .height]
             controller.panel.contentView = hostingView
-            controller.updateFrame(animated: false)
+            controller.panel.setFrame(ScreenGeometryHelper.screenInfo(for: screen).windowFrame(), display: true)
             controller.panel.orderFrontRegardless()
             
             controllers.append(controller)
@@ -135,9 +113,7 @@ public final class NotchWindowManager: ObservableObject {
     }
     
     public func updatePanelFrames(animated: Bool = true) {
-        for c in controllers {
-            c.updateFrame(animated: animated)
-        }
+        // Pure SwiftUI layout handles smooth 120Hz animations with no AppKit window resize lag
     }
     
     private func setupNotifications() {
