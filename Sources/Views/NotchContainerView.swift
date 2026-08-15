@@ -735,35 +735,147 @@ public struct NotchContainerView: View {
         .padding(.top, 2)
     }
     
-    // MARK: - Tray Mode
+    // MARK: - Tray Mode (Full Options & Direct Actions)
     private var trayContentView: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             if shelfManager.files.isEmpty {
                 VStack(spacing: 6) {
                     Image(systemName: "tray.and.arrow.down.fill")
-                        .font(.system(size: 26))
+                        .font(.system(size: 24))
                         .foregroundStyle(Color.white.opacity(0.75))
                     
-                    Text("Files Tray")
-                        .font(.system(size: 12, weight: .semibold))
+                    Text("Files Tray is Empty")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.white)
                     
-                    Text("Drag and drop files here to stash them")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color.white.opacity(0.5))
+                    Text("Drag files to the notch to stash them or AirDrop")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Color.white.opacity(0.55))
+                    
+                    Button(action: {
+                        let panel = NSOpenPanel()
+                        panel.allowsMultipleSelection = true
+                        panel.canChooseDirectories = true
+                        panel.canChooseFiles = true
+                        if panel.runModal() == .OK {
+                            for url in panel.urls {
+                                shelfManager.addFile(url: url)
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Choose Files to Stash")
+                        }
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color.white.opacity(0.15)))
+                        .foregroundStyle(Color.white)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
             } else {
+                // Header Action Bar for Stashed Files
+                HStack {
+                    HStack(spacing: 5) {
+                        Text("Files Tray")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.white)
+                        
+                        Text("\(shelfManager.files.count)")
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(Color.cyan.opacity(0.25)))
+                            .foregroundStyle(Color.cyan)
+                    }
+                    
+                    Spacer()
+                    
+                    // Quick Action Buttons
+                    HStack(spacing: 6) {
+                        // 1. AirDrop All
+                        Button(action: {
+                            let urls = shelfManager.files.map { $0.url }
+                            NSApp.activate(ignoringOtherApps: true)
+                            if let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: urls) {
+                                service.perform(withItems: urls)
+                            } else {
+                                let picker = NSSharingServicePicker(items: urls)
+                                if let view = panelController.panel.contentView {
+                                    picker.show(relativeTo: panelController.panel.frame, of: view, preferredEdge: .minY)
+                                }
+                            }
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "dot.radiowaves.left.and.right")
+                                    .font(.system(size: 8))
+                                Text("AirDrop All")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2.5)
+                            .background(Capsule().fill(Color.blue.opacity(0.45)))
+                            .foregroundStyle(Color.white)
+                        }
+                        .buttonStyle(.plain)
+                        .help("AirDrop all stashed files")
+                        
+                        // 2. Add More Files (+)
+                        Button(action: {
+                            let panel = NSOpenPanel()
+                            panel.allowsMultipleSelection = true
+                            panel.canChooseDirectories = true
+                            panel.canChooseFiles = true
+                            if panel.runModal() == .OK {
+                                for url in panel.urls {
+                                    shelfManager.addFile(url: url)
+                                }
+                            }
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(3.5)
+                                .background(Circle().fill(Color.white.opacity(0.12)))
+                                .foregroundStyle(Color.white)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Add more files")
+                        
+                        // 3. Clear All
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                shelfManager.clearAll()
+                            }
+                        }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 9))
+                                .padding(3.5)
+                                .background(Circle().fill(Color.white.opacity(0.12)))
+                                .foregroundStyle(Color.red.opacity(0.85))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Clear All Files")
+                    }
+                }
+                .padding(.horizontal, 4)
+                
+                // Horizontal Stashed Files Carousel
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 8) {
                         ForEach(shelfManager.files) { file in
-                            StashedFileCard(file: file) {
-                                shelfManager.removeFile(id: file.id)
+                            NotchTrayFileCard(file: file) {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    shelfManager.removeFile(id: file.id)
+                                }
                             }
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
                 }
             }
         }
@@ -903,6 +1015,130 @@ struct BluetoothDeviceCard: View {
         if level > 50 { return "battery.75" }
         if level > 25 { return "battery.50" }
         return "battery.25"
+    }
+}
+
+struct NotchTrayFileCard: View {
+    let file: StashedFile
+    let onRemove: () -> Void
+    @State private var isHovered: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            // Top: Icon + Remove
+            HStack {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: file.url.path))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+                
+                Spacer()
+                
+                Button(action: onRemove) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.white.opacity(0.45))
+                }
+                .buttonStyle(.plain)
+                .help("Remove from Tray")
+            }
+            
+            // Name & Size
+            VStack(alignment: .leading, spacing: 1) {
+                Text(file.name)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.white)
+                    .lineLimit(1)
+                    .frame(maxWidth: 105, alignment: .leading)
+                
+                Text(file.sizeString)
+                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.5))
+            }
+            
+            // Action Buttons Row: [Open] [AirDrop] [Copy] [Finder]
+            HStack(spacing: 3.5) {
+                // 1. Open
+                Button(action: {
+                    NSWorkspace.shared.open(file.url)
+                }) {
+                    Image(systemName: "arrow.up.forward.app.fill")
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(Color.white.opacity(0.9))
+                        .padding(3.5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+                .help("Open File")
+                
+                // 2. AirDrop
+                Button(action: {
+                    NSApp.activate(ignoringOtherApps: true)
+                    if let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: [file.url]) {
+                        service.perform(withItems: [file.url])
+                    } else {
+                        let picker = NSSharingServicePicker(items: [file.url])
+                        picker.show(relativeTo: .zero, of: NSApp.keyWindow?.contentView ?? NSView(), preferredEdge: .minY)
+                    }
+                }) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(Color.cyan)
+                        .padding(3.5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.cyan.opacity(0.18)))
+                }
+                .buttonStyle(.plain)
+                .help("AirDrop this file")
+                
+                // 3. Copy File to Clipboard
+                Button(action: {
+                    let pboard = NSPasteboard.general
+                    pboard.clearContents()
+                    pboard.writeObjects([file.url as NSURL])
+                    pboard.setString(file.url.path, forType: .string)
+                    NSSound(named: "Tink")?.play()
+                }) {
+                    Image(systemName: "doc.on.doc.fill")
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(Color.white.opacity(0.9))
+                        .padding(3.5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+                .help("Copy File / Path")
+                
+                // 4. Reveal in Finder
+                Button(action: {
+                    NSWorkspace.shared.selectFile(file.url.path, inFileViewerRootedAtPath: file.url.deletingLastPathComponent().path)
+                }) {
+                    Image(systemName: "folder.fill")
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(Color.yellow.opacity(0.9))
+                        .padding(3.5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+                .help("Show in Finder")
+            }
+            .padding(.top, 1)
+        }
+        .padding(7)
+        .frame(width: 120, height: 95)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isHovered ? Color.cyan.opacity(0.4) : Color.white.opacity(0.08), lineWidth: 1)
+                )
+        )
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .onDrag {
+            // Drag out of notch to external apps
+            NSItemProvider(object: file.url as NSURL)
+        }
     }
 }
 
