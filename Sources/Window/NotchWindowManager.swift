@@ -34,14 +34,14 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         
         switch state {
         case .compact:
-            width = 170
+            width = MediaRemoteService.shared.currentTrack.isPlaying ? 210 : 170
             height = 12
         case .peek:
             width = NotchConstants.defaultCompactWidth // 220
             height = NotchConstants.defaultCompactHeight // 34
         case .expanded:
-            width = NotchConstants.defaultExpandedWidth // 580
-            height = NotchConstants.defaultExpandedHeight // 155
+            width = CGFloat(UserPreferences.shared.expandedWidth)
+            height = CGFloat(UserPreferences.shared.expandedHeight)
         }
         
         let x = floor(screenFrame.midX - (width / 2))
@@ -49,34 +49,29 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         return NSRect(x: x, y: y, width: width, height: height)
     }
     
-    public func setHovered(_ hovered: Bool) {
-        guard self.isHovered != hovered else { return }
-        self.isHovered = hovered
+    public func updateHoverState(isInside: Bool) {
+        self.isHovered = isInside
         
-        if state != .expanded {
-            // Ultra-soft ease in and out animation
-            withAnimation(.easeInOut(duration: 0.28)) {
-                self.state = hovered ? .peek : .compact
+        if isInside {
+            if state != .expanded && state != .peek {
+                self.state = .peek
+            }
+        } else {
+            if state != .expanded && state != .compact {
+                self.state = .compact
             }
         }
         
-        // Dynamically toggle ignoresMouseEvents so clicks outside visible notch pass through
-        self.panel.ignoresMouseEvents = !hovered && (state != .expanded)
+        self.panel.ignoresMouseEvents = !isInside && (state != .expanded)
     }
     
     public func expand() {
-        // Ultra-soft ease in and out expand animation
-        withAnimation(.easeInOut(duration: 0.34)) {
-            self.state = .expanded
-        }
+        self.state = .expanded
         self.panel.ignoresMouseEvents = false
     }
     
     public func collapse() {
-        // Ultra-soft ease in and out collapse animation
-        withAnimation(.easeInOut(duration: 0.30)) {
-            self.state = self.isHovered ? .peek : .compact
-        }
+        self.state = self.isHovered ? .peek : .compact
         self.panel.ignoresMouseEvents = !self.isHovered
     }
     
@@ -188,20 +183,30 @@ public final class NotchWindowManager: ObservableObject {
     }
     
     private func processMouseLocation(_ mouseLoc: NSPoint) {
+        let prefs = UserPreferences.shared
+        
         for controller in controllers {
             let visibleRect = controller.activeVisibleScreenRect()
-            let isInside = NSPointInRect(mouseLoc, visibleRect)
+            let screenMaxY = controller.screen.frame.maxY
             
-            if isInside {
-                controller.setHovered(true)
-            } else {
-                if controller.state != .expanded {
-                    controller.setHovered(false)
-                } else if UserPreferences.shared.alwaysOpenOnHover {
-                    let expandedRect = controller.activeVisibleScreenRect()
-                    if !NSPointInRect(mouseLoc, expandedRect) {
+            // Expand hover hit-box generously:
+            var hoverRect = visibleRect.insetBy(dx: -40, dy: -30)
+            if hoverRect.maxY < screenMaxY + 25 {
+                hoverRect.size.height = (screenMaxY + 25) - hoverRect.origin.y
+            }
+            
+            let isInside = hoverRect.contains(mouseLoc)
+            
+            if controller.state == .expanded {
+                if !prefs.preventClosingOnMouseLeave {
+                    let expandedRect = controller.activeVisibleScreenRect().insetBy(dx: -40, dy: -40)
+                    if !expandedRect.contains(mouseLoc) {
                         controller.collapse()
                     }
+                }
+            } else {
+                if prefs.alwaysOpenOnHover {
+                    controller.updateHoverState(isInside: isInside)
                 }
             }
         }
