@@ -708,28 +708,32 @@ public struct NotchContainerView: View {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.12))
-                            .frame(width: 58, height: 58)
+                            .frame(width: 82, height: 82)
+                            .overlay(
+                                Circle()
+                                    .stroke(showMirrorModal ? Color.green.opacity(0.6) : Color.white.opacity(0.15), lineWidth: 1)
+                            )
                         
                         if showMirrorModal && cameraService.hasPermission {
                             CameraPreviewView()
-                                .frame(width: 58, height: 58)
+                                .frame(width: 82, height: 82)
                                 .clipShape(Circle())
                         } else {
-                            VStack(spacing: 2) {
+                            VStack(spacing: 4) {
                                 Image(systemName: "video.fill")
-                                    .font(.system(size: 18))
+                                    .font(.system(size: 24))
                                     .foregroundStyle(Color.white)
                                 
                                 Text("Mirror")
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(Color.white.opacity(0.8))
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(Color.white.opacity(0.85))
                             }
                         }
                     }
                 }
                 .buttonStyle(.plain)
             }
-            .frame(maxWidth: 90)
+            .frame(maxWidth: 105)
         }
         .padding(.horizontal, 10)
         .padding(.top, 2)
