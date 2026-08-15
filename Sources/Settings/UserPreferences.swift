@@ -2,59 +2,95 @@ import SwiftUI
 import Combine
 import ServiceManagement
 
-public enum AppThemePreset: String, CaseIterable, Identifiable {
-    case obsidian = "Obsidian Dark"
-    case glassmorphism = "Frosted Glass"
-    case neonCyber = "Neon Glow"
-    case titanium = "Titanium Mist"
+public enum FullscreenVisibilityOption: String, CaseIterable, Identifiable {
+    case notchedOnly = "On notched screens"
+    case always = "Always"
+    case never = "Never"
     
     public var id: String { rawValue }
+}
+
+public enum MediaSourceOption: String, CaseIterable, Identifiable {
+    case system = "System"
+    case appleMusic = "Apple Music"
+    case spotify = "Spotify"
     
-    public var accentColors: [Color] {
-        switch self {
-        case .obsidian:
-            return [Color.white.opacity(0.18), Color.white.opacity(0.04)]
-        case .glassmorphism:
-            return [Color.cyan.opacity(0.4), Color.purple.opacity(0.3)]
-        case .neonCyber:
-            return [Color.green.opacity(0.6), Color.cyan.opacity(0.5)]
-        case .titanium:
-            return [Color.white.opacity(0.3), Color.gray.opacity(0.2)]
-        }
-    }
+    public var id: String { rawValue }
+}
+
+public enum LiveVisualizerEffect: String, CaseIterable, Identifiable {
+    case spectrograph = "Audio Spectrograph"
+    case waves = "Waves"
+    case vibratingCircle = "Vibrating Circle"
+    case gif = "GIF"
+    
+    public var id: String { rawValue }
 }
 
 public final class UserPreferences: ObservableObject {
     public static let shared = UserPreferences()
     
-    // Behavior & Triggers
-    @AppStorage("enableHoverExpansion") public var enableHoverExpansion: Bool = true
-    @AppStorage("hoverDelay") public var hoverDelay: Double = 0.15
-    @AppStorage("autoCollapseDelay") public var autoCollapseDelay: Double = 0.4
-    @AppStorage("enableHaptics") public var enableHaptics: Bool = true
+    // MARK: - General Tab
     @AppStorage("launchAtLogin") public var launchAtLogin: Bool = false
+    @AppStorage("fullscreenVisibility") public var fullscreenVisibilityRaw: String = FullscreenVisibilityOption.notchedOnly.rawValue
+    @AppStorage("mediaSource") public var mediaSourceRaw: String = MediaSourceOption.system.rawValue
     
-    // Dimensions & Geometry
+    // Notch Toggles
+    @AppStorage("preferRoundButtons") public var preferRoundButtons: Bool = true
+    @AppStorage("translucentNotchBackground") public var translucentNotchBackground: Bool = false
+    @AppStorage("alwaysOpenOnHover") public var alwaysOpenOnHover: Bool = true
+    @AppStorage("disableHaptics") public var disableHaptics: Bool = false
+    @AppStorage("preventClosingOnMouseLeave") public var preventClosingOnMouseLeave: Bool = true
+    @AppStorage("lockWhileTyping") public var lockWhileTyping: Bool = false
+    
+    // Fine Tune & Content
+    @AppStorage("contentPadding") public var contentPadding: Double = 12
+    @AppStorage("notchWidthOffset") public var notchWidthOffset: Double = 0
+    @AppStorage("notchHeightOffset") public var notchHeightOffset: Double = 0
+    
+    // Non-Notched Handler
+    @AppStorage("enableHandlerNoNotch") public var enableHandlerNoNotch: Bool = true
+    @AppStorage("handlerWidth") public var handlerWidth: Double = 184
+    @AppStorage("handlerHeight") public var handlerHeight: Double = 8
+    @AppStorage("transparentHandler") public var transparentHandler: Bool = false
+    @AppStorage("demoMode") public var demoMode: Bool = false
+    
+    // MARK: - Gestures Tab
+    @AppStorage("allowHoverGestures") public var allowHoverGestures: Bool = true
+    @AppStorage("verticalGestureOpenClose") public var verticalGestureOpenClose: Bool = true
+    @AppStorage("horizontalGestureMedia") public var horizontalGestureMedia: Bool = true
+    @AppStorage("invertMediaGestures") public var invertMediaGestures: Bool = false
+    
+    // MARK: - Live Activities Tab
+    @AppStorage("enableLiveActivities") public var enableLiveActivities: Bool = true
+    @AppStorage("hideInNonNotchedScreens") public var hideInNonNotchedScreens: Bool = false
+    @AppStorage("inactivityTimeout") public var inactivityTimeout: Double = 10
+    @AppStorage("enableInteractiveActivities") public var enableInteractiveActivities: Bool = true
+    @AppStorage("enableQuickPeek") public var enableQuickPeek: Bool = true
+    @AppStorage("unhideAutomatically") public var unhideAutomatically: Bool = true
+    @AppStorage("showSongChange") public var showSongChange: Bool = false
+    
+    // Show in Fullscreen checkboxes
+    @AppStorage("fullscreenMedia") public var fullscreenMedia: Bool = true
+    @AppStorage("fullscreenFilesTray") public var fullscreenFilesTray: Bool = true
+    @AppStorage("fullscreenCalendar") public var fullscreenCalendar: Bool = true
+    @AppStorage("fullscreenNewUpdate") public var fullscreenNewUpdate: Bool = true
+    @AppStorage("fullscreenBluetooth") public var fullscreenBluetooth: Bool = true
+    @AppStorage("fullscreenBattery") public var fullscreenBattery: Bool = true
+    @AppStorage("fullscreenTimerEnded") public var fullscreenTimerEnded: Bool = true
+    
+    // Customize Activities
+    @AppStorage("albumCornerRadius") public var albumCornerRadius: Double = 5
+    @AppStorage("visualizerEffect") public var visualizerEffectRaw: String = LiveVisualizerEffect.spectrograph.rawValue
+    @AppStorage("coloredEffects") public var coloredEffects: Bool = true
+    
+    // MARK: - Nook Tab (Hub)
+    @AppStorage("enableNook") public var enableNook: Bool = true
+    @AppStorage("showDividersBetweenWidgets") public var showDividersBetweenWidgets: Bool = true
     @AppStorage("expandedWidth") public var expandedWidth: Double = 620
     @AppStorage("expandedHeight") public var expandedHeight: Double = 270
-    @AppStorage("floatingIslandOffset") public var floatingIslandOffset: Double = 8
-    @AppStorage("compactPillWidth") public var compactPillWidth: Double = 210
     
-    // Appearance & Style
-    @AppStorage("themePresetRaw") public var themePresetRaw: String = AppThemePreset.obsidian.rawValue
-    @AppStorage("borderGlowOpacity") public var borderGlowOpacity: Double = 0.2
-    @AppStorage("glassBlurIntensity") public var glassBlurIntensity: Double = 0.85
-    
-    // Widget Visibility Toggles
-    @AppStorage("showMediaWidget") public var showMediaWidget: Bool = true
-    @AppStorage("showDropShelfWidget") public var showDropShelfWidget: Bool = true
-    @AppStorage("showMirrorWidget") public var showMirrorWidget: Bool = true
-    @AppStorage("showTimerWidget") public var showTimerWidget: Bool = true
-    @AppStorage("showBluetoothWidget") public var showBluetoothWidget: Bool = true
-    @AppStorage("showPipelinesWidget") public var showPipelinesWidget: Bool = true
-    @AppStorage("showDevHUDWidget") public var showDevHUDWidget: Bool = true
-    @AppStorage("showCalendarWidget") public var showCalendarWidget: Bool = true
-    
+    // Active Tab Selection
     @AppStorage("selectedTabRaw") public var selectedTabRaw: String = WidgetTab.media.rawValue
     
     public var selectedTab: WidgetTab {
@@ -62,23 +98,23 @@ public final class UserPreferences: ObservableObject {
         set { selectedTabRaw = newValue.rawValue }
     }
     
-    public var currentTheme: AppThemePreset {
-        get { AppThemePreset(rawValue: themePresetRaw) ?? .obsidian }
-        set { themePresetRaw = newValue.rawValue }
+    public var visibleTabs: [WidgetTab] {
+        return WidgetTab.allCases
     }
     
-    public var visibleTabs: [WidgetTab] {
-        var tabs: [WidgetTab] = []
-        if showMediaWidget { tabs.append(.media) }
-        if showDropShelfWidget { tabs.append(.dropShelf) }
-        if showMirrorWidget { tabs.append(.mirror) }
-        if showTimerWidget { tabs.append(.timer) }
-        if showBluetoothWidget { tabs.append(.bluetooth) }
-        if showPipelinesWidget { tabs.append(.pipelines) }
-        if showDevHUDWidget { tabs.append(.devHUD) }
-        if showCalendarWidget { tabs.append(.calendar) }
-        tabs.append(.settings) // Settings always accessible
-        return tabs
+    public var fullscreenVisibility: FullscreenVisibilityOption {
+        get { FullscreenVisibilityOption(rawValue: fullscreenVisibilityRaw) ?? .notchedOnly }
+        set { fullscreenVisibilityRaw = newValue.rawValue }
+    }
+    
+    public var mediaSource: MediaSourceOption {
+        get { MediaSourceOption(rawValue: mediaSourceRaw) ?? .system }
+        set { mediaSourceRaw = newValue.rawValue }
+    }
+    
+    public var visualizerEffect: LiveVisualizerEffect {
+        get { LiveVisualizerEffect(rawValue: visualizerEffectRaw) ?? .spectrograph }
+        set { visualizerEffectRaw = newValue.rawValue }
     }
     
     public func toggleLaunchAtLogin(_ enable: Bool) {
@@ -94,6 +130,46 @@ public final class UserPreferences: ObservableObject {
                 print("Launch at login toggle: \(error.localizedDescription)")
             }
         }
+    }
+    
+    public func resetAllSettings() {
+        launchAtLogin = false
+        preferRoundButtons = true
+        translucentNotchBackground = false
+        alwaysOpenOnHover = true
+        disableHaptics = false
+        preventClosingOnMouseLeave = true
+        lockWhileTyping = false
+        contentPadding = 12
+        notchWidthOffset = 0
+        notchHeightOffset = 0
+        enableHandlerNoNotch = true
+        handlerWidth = 184
+        handlerHeight = 8
+        transparentHandler = false
+        demoMode = false
+        
+        allowHoverGestures = true
+        verticalGestureOpenClose = true
+        horizontalGestureMedia = true
+        invertMediaGestures = false
+        
+        enableLiveActivities = true
+        hideInNonNotchedScreens = false
+        inactivityTimeout = 10
+        enableInteractiveActivities = true
+        enableQuickPeek = true
+        unhideAutomatically = true
+        showSongChange = false
+        
+        albumCornerRadius = 5
+        visualizerEffectRaw = LiveVisualizerEffect.spectrograph.rawValue
+        coloredEffects = true
+        
+        enableNook = true
+        showDividersBetweenWidgets = true
+        expandedWidth = 620
+        expandedHeight = 270
     }
     
     private init() {}

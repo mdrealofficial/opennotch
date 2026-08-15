@@ -1,6 +1,31 @@
 import SwiftUI
 import AppKit
 
+public struct TabPillButton: View {
+    let tab: WidgetTab
+    let isSelected: Bool
+    let action: () -> Void
+    
+    public var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 10, weight: .semibold))
+                Text(tab.rawValue)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color.white.opacity(0.2) : Color.clear)
+            )
+            .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.6))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 public struct NotchContainerView: View {
     @ObservedObject var windowManager: NotchWindowManager
     @ObservedObject var prefs = UserPreferences.shared
@@ -114,111 +139,106 @@ public struct NotchContainerView: View {
     // MARK: - Expanded Notch View
     private var expandedNotchBody: some View {
         VStack(spacing: 10) {
-            // Tab Switcher Header (Scrollable or Compact Flow)
-            HStack(spacing: 4) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 4) {
-                        ForEach(prefs.visibleTabs) { tab in
-                            Button(action: {
-                                withAnimation(.easeInOut(duration: 0.16)) {
-                                    prefs.selectedTab = tab
-                                }
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: tab.icon)
-                                        .font(.system(size: 10, weight: .semibold))
-                                    Text(tab.rawValue)
-                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(prefs.selectedTab == tab ? Color.white.opacity(0.2) : Color.clear)
-                                )
-                                .foregroundStyle(prefs.selectedTab == tab ? Color.white : Color.white.opacity(0.6))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                // Close / Collapse Button
-                Button(action: {
-                    withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                        windowManager.collapse()
-                    }
-                }) {
-                    Image(systemName: "chevron.up.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-                .buttonStyle(.plain)
-                .help("Collapse Notch")
-            }
-            .padding(.horizontal, 6)
-            .padding(.top, 2)
+            tabBarHeader
             
-            // Tab Content
-            ZStack {
-                switch prefs.selectedTab {
-                case .media:
-                    NowPlayingWidgetView()
-                case .dropShelf:
-                    DropShelfWidgetView()
-                case .mirror:
-                    CameraMirrorWidgetView()
-                case .timer:
-                    TimerWidgetView()
-                case .bluetooth:
-                    BluetoothWidgetView()
-                case .pipelines:
-                    PipelinesWidgetView()
-                case .devHUD:
-                    DevHUDWidgetView()
-                case .calendar:
-                    UpcomingEventsWidgetView()
-                case .settings:
-                    SettingsView()
-                }
-            }
-            .padding(.horizontal, 6)
-            .padding(.bottom, 4)
+            tabContentGroup
+                .padding(.horizontal, 6)
+                .padding(.bottom, 4)
         }
         .padding(14)
         .frame(width: prefs.expandedWidth, height: prefs.expandedHeight)
-        .background(
+        .background(expandedBackground)
+    }
+    
+    @ViewBuilder
+    private var tabBarHeader: some View {
+        HStack(spacing: 4) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(prefs.visibleTabs) { tab in
+                        TabPillButton(
+                            tab: tab,
+                            isSelected: prefs.selectedTab == tab
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.16)) {
+                                prefs.selectedTab = tab
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+                    windowManager.collapse()
+                }
+            }) {
+                Image(systemName: "chevron.up.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            .buttonStyle(.plain)
+            .help("Collapse Notch")
+        }
+        .padding(.horizontal, 6)
+        .padding(.top, 2)
+    }
+    
+    @ViewBuilder
+    private var tabContentGroup: some View {
+        switch prefs.selectedTab {
+        case .media:
+            NowPlayingWidgetView()
+        case .dropShelf:
+            DropShelfWidgetView()
+        case .mirror:
+            CameraMirrorWidgetView()
+        case .timer:
+            TimerWidgetView()
+        case .bluetooth:
+            BluetoothWidgetView()
+        case .pipelines:
+            PipelinesWidgetView()
+        case .devHUD:
+            DevHUDWidgetView()
+        case .calendar:
+            UpcomingEventsWidgetView()
+        case .settings:
+            SettingsView()
+        }
+    }
+    
+    private var expandedBackground: some View {
+        ZStack {
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
                 .fill(Color.black.opacity(0.88))
-                .background(
-                    RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                        .fill(.ultraThinMaterial)
+            
+            RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
+                .fill(.ultraThinMaterial)
+            
+            RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.25),
+                            Color.white.opacity(0.05),
+                            Color.black.opacity(0.4)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.2
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.25),
-                                    Color.white.opacity(0.05),
-                                    Color.black.opacity(0.4)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.2
-                        )
-                )
-                .shadow(color: Color.black.opacity(0.5), radius: 24, x: 0, y: 12)
-        )
+        }
+        .shadow(color: Color.black.opacity(0.5), radius: 24, x: 0, y: 12)
     }
     
     // MARK: - Hover Handlers
     private func handleHover(_ hovering: Bool) {
         isHovering = hovering
-        guard prefs.enableHoverExpansion else { return }
+        guard prefs.alwaysOpenOnHover else { return }
         
         if hovering {
             autoCloseTimer?.invalidate()
@@ -226,7 +246,7 @@ public struct NotchContainerView: View {
             
             if !windowManager.isExpanded {
                 hoverTimer?.invalidate()
-                hoverTimer = Timer.scheduledTimer(withTimeInterval: prefs.hoverDelay, repeats: false) { _ in
+                hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
                     if self.isHovering && !self.windowManager.isExpanded {
                         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
                             self.windowManager.expand()
@@ -240,7 +260,7 @@ public struct NotchContainerView: View {
             
             if windowManager.isExpanded {
                 autoCloseTimer?.invalidate()
-                autoCloseTimer = Timer.scheduledTimer(withTimeInterval: prefs.autoCollapseDelay, repeats: false) { _ in
+                autoCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { _ in
                     if !self.isHovering && self.windowManager.isExpanded {
                         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
                             self.windowManager.collapse()
