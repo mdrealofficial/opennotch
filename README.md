@@ -50,23 +50,23 @@
 
 ```mermaid
 flowchart TD
-    App[OpenNotch App] --> WindowManager[NotchWindowManager]
-    WindowManager --> ScreenDetector[ScreenGeometryHelper]
-    WindowManager --> Panel[NotchPanel (NSPanel)]
-    Panel --> Container[NotchContainerView (SwiftUI)]
+    App["OpenNotch App"] --> WindowManager["NotchWindowManager"]
+    WindowManager --> ScreenDetector["ScreenGeometryHelper"]
+    WindowManager --> Panel["NotchPanel (NSPanel)"]
+    Panel --> Container["NotchContainerView (SwiftUI)"]
     
-    Container --> CompactView[Compact Notch Capsule]
-    Container --> ExpandedView[Expanded Glass Hub]
+    Container --> CompactView["Compact Notch Capsule"]
+    Container --> ExpandedView["Expanded Glass Hub"]
     
-    ExpandedView --> TabMedia[🎵 Media Hub]
-    ExpandedView --> TabShelf[📦 Drop Shelf]
-    ExpandedView --> TabMirror[🪞 Camera Mirror]
-    ExpandedView --> TabTimer[⏱️ Timers & Pomodoro]
-    ExpandedView --> TabBT[🎧 Bluetooth Gear]
-    ExpandedView --> TabPipe[⚡️ Shortcuts / Pipelines]
-    ExpandedView --> TabDev[💻 Dev HUD]
-    ExpandedView --> TabCal[📅 Calendar & Notes]
-    ExpandedView --> TabSettings[⚙️ Preferences]
+    ExpandedView --> TabMedia["🎵 Media Hub"]
+    ExpandedView --> TabShelf["📦 Drop Shelf"]
+    ExpandedView --> TabMirror["🪞 Camera Mirror"]
+    ExpandedView --> TabTimer["⏱️ Timers & Pomodoro"]
+    ExpandedView --> TabBT["🎧 Bluetooth Gear"]
+    ExpandedView --> TabPipe["⚡️ Shortcuts / Pipelines"]
+    ExpandedView --> TabDev["💻 Dev HUD"]
+    ExpandedView --> TabCal["📅 Calendar & Notes"]
+    ExpandedView --> TabSettings["⚙️ Preferences"]
 ```
 
 ---
