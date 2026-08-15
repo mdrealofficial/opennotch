@@ -2,11 +2,22 @@ import AppKit
 import SwiftUI
 import Combine
 
+public enum NotchState {
+    case compact   // State 1: Normal minimal resting notch
+    case peek      // State 2: On Hover slight extension
+    case expanded  // State 3: On Click full Nook / Tray hub
+}
+
 public final class NotchPanelController: ObservableObject, Identifiable {
     public let id = UUID()
     public let screen: NSScreen
     public let panel: NotchPanel
-    @Published public var isExpanded: Bool = false
+    @Published public var state: NotchState = .compact
+    @Published public var isHovered: Bool = false
+    
+    public var isExpanded: Bool {
+        state == .expanded
+    }
     
     public init(screen: NSScreen) {
         self.screen = screen
@@ -15,22 +26,29 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         self.panel = NotchPanel(contentRect: frame)
     }
     
+    public func setHovered(_ hovered: Bool) {
+        self.isHovered = hovered
+        if state != .expanded {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                self.state = hovered ? .peek : .compact
+            }
+        }
+    }
+    
     public func expand() {
-        guard !isExpanded else { return }
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-            self.isExpanded = true
+            self.state = .expanded
         }
     }
     
     public func collapse() {
-        guard isExpanded else { return }
         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-            self.isExpanded = false
+            self.state = self.isHovered ? .peek : .compact
         }
     }
     
     public func toggleExpanded() {
-        if isExpanded {
+        if state == .expanded {
             collapse()
         } else {
             expand()
@@ -112,19 +130,15 @@ public final class NotchWindowManager: ObservableObject {
         activeController()?.toggleExpanded()
     }
     
-    public func updatePanelFrames(animated: Bool = true) {
-        // Pure SwiftUI layout handles smooth 120Hz animations with no AppKit window resize lag
-    }
+    public func updatePanelFrames(animated: Bool = true) {}
     
     private func setupNotifications() {
-        // Screen resolution / plug / unplug changes
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
                 self?.rebuildPanels()
             }
             .store(in: &cancellables)
         
-        // Listen to ScreenDisplayMode user preference changes
         UserDefaults.standard.publisher(for: \.screenDisplayModeRawKey)
             .sink { [weak self] _ in
                 self?.rebuildPanels()
@@ -133,7 +147,6 @@ public final class NotchWindowManager: ObservableObject {
     }
 }
 
-// Swift KVO extension for UserDefaults screenDisplayMode
 private extension UserDefaults {
     @objc dynamic var screenDisplayModeRawKey: String? {
         return string(forKey: "screenDisplayMode")

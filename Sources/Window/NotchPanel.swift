@@ -43,13 +43,20 @@ public final class NotchPassThroughHostingView<Content: View>: NSHostingView<Con
             return super.hitTest(point)
         }
         
-        let activeWidth: CGFloat = controller.isExpanded
-            ? NotchConstants.defaultExpandedWidth + 24
-            : NotchConstants.defaultCompactWidth + 16
+        let activeWidth: CGFloat
+        let activeHeight: CGFloat
         
-        let activeHeight: CGFloat = controller.isExpanded
-            ? NotchConstants.defaultExpandedHeight + 16
-            : NotchConstants.defaultCompactHeight + 8
+        switch controller.state {
+        case .expanded:
+            activeWidth = NotchConstants.defaultExpandedWidth + 24
+            activeHeight = NotchConstants.defaultExpandedHeight + 16
+        case .peek:
+            activeWidth = NotchConstants.defaultCompactWidth + 16
+            activeHeight = NotchConstants.defaultCompactHeight + 10
+        case .compact:
+            activeWidth = 190
+            activeHeight = 16
+        }
         
         let minX = (bounds.width - activeWidth) / 2
         let maxX = minX + activeWidth
@@ -62,7 +69,6 @@ public final class NotchPassThroughHostingView<Content: View>: NSHostingView<Con
             return super.hitTest(point)
         }
         
-        // Pass click through to underlying windows
         return nil
     }
 }
