@@ -10,6 +10,12 @@ public enum NotchState {
     case dropTarget // State 4: On Dragging file/URL to notch (430 x 72)
 }
 
+public enum NotchViewMode: String, CaseIterable {
+    case nook = "Nook"
+    case tray = "Tray"
+    case bt = "BT"
+}
+
 public enum DropZoneTarget {
     case none
     case filesTray
@@ -21,8 +27,10 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     public let screen: NSScreen
     public let panel: NotchPanel
     @Published public var state: NotchState = .compact
+    @Published public var viewMode: NotchViewMode = .nook
     @Published public var isHovered: Bool = false
     @Published public var activeDropZone: DropZoneTarget = .none
+    @Published public var isPerformingDrop: Bool = false
     
     public var isExpanded: Bool {
         state == .expanded
@@ -64,7 +72,7 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     public func updateHoverState(isInside: Bool) {
         self.isHovered = isInside
         
-        if state == .dropTarget {
+        if state == .dropTarget || isPerformingDrop {
             return
         }
         
@@ -88,6 +96,7 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     
     public func collapse() {
         self.activeDropZone = .none
+        self.isPerformingDrop = false
         self.state = self.isHovered ? .peek : .compact
         self.panel.ignoresMouseEvents = !self.isHovered
     }
@@ -121,17 +130,18 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     
     public func handleDraggingExited(_ sender: NSDraggingInfo?) {
         self.activeDropZone = .none
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            if self.state == .dropTarget {
-                self.collapse()
+        if !isPerformingDrop {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                guard let self = self else { return }
+                if self.state == .dropTarget && !self.isPerformingDrop {
+                    self.collapse()
+                }
             }
         }
     }
     
     private func updateDropZone(location: NSPoint) {
         let visibleRect = activeVisibleScreenRect()
-        // Determine whether mouse is in left half (Files Tray) or right half (AirDrop)
         let midX = visibleRect.midX
         if location.x < midX {
             self.activeDropZone = .filesTray
@@ -141,27 +151,38 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     }
     
     public func handlePerformDrag(_ sender: NSDraggingInfo) -> Bool {
+        self.isPerformingDrop = true
         let pboard = sender.draggingPasteboard
         var urlsToShare: [URL] = []
         
+        // 1. Read NSURL objects
         if let urls = pboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL] {
-            urlsToShare = urls
+            for u in urls {
+                if !urlsToShare.contains(u) { urlsToShare.append(u) }
+            }
         }
         
-        if urlsToShare.isEmpty {
-            if let string = pboard.string(forType: .string) {
-                if let url = URL(string: string), url.scheme != nil {
-                    urlsToShare = [url]
-                } else {
-                    // Create temp file for text snippet
-                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Snippet.txt")
-                    try? string.write(to: tempURL, atomically: true, encoding: .utf8)
-                    urlsToShare = [tempURL]
-                }
+        // 2. Read NSFilenamesPboardType paths
+        if let filePaths = pboard.propertyList(forType: NSPasteboard.PasteboardType("NSFilenamesPboardType")) as? [String] {
+            for path in filePaths {
+                let u = URL(fileURLWithPath: path)
+                if !urlsToShare.contains(u) { urlsToShare.append(u) }
+            }
+        }
+        
+        // 3. Read String URL or Text snippet
+        if let string = pboard.string(forType: .string) {
+            if let u = URL(string: string), u.scheme != nil {
+                if !urlsToShare.contains(u) { urlsToShare.append(u) }
+            } else if !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && urlsToShare.isEmpty {
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Note-\(Int(Date().timeIntervalSince1970)).txt")
+                try? string.write(to: tempURL, atomically: true, encoding: .utf8)
+                urlsToShare.append(tempURL)
             }
         }
         
         guard !urlsToShare.isEmpty else {
+            self.isPerformingDrop = false
             collapse()
             return false
         }
@@ -171,22 +192,33 @@ public final class NotchPanelController: ObservableObject, Identifiable {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
+            NSSound(named: "Pop")?.play()
+            
             if targetZone == .airdrop {
                 if let service = NSSharingService(named: .sendViaAirDrop) {
                     if service.canPerform(withItems: urlsToShare) {
                         service.perform(withItems: urlsToShare)
                     }
                 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    self.isPerformingDrop = false
+                    self.collapse()
+                }
             } else {
-                // Files Tray
+                // Files Tray: Add to drop shelf and immediately open expanded tray view!
                 for url in urlsToShare {
                     DropShelfManager.shared.addFile(url: url)
                 }
-            }
-            
-            // Switch to expanded tray mode to show the stashed file, or collapse smoothly
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                self.collapse()
+                
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
+                    self.viewMode = .tray
+                    self.state = .expanded
+                    self.panel.ignoresMouseEvents = false
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    self.isPerformingDrop = false
+                }
             }
         }
         
@@ -301,9 +333,11 @@ public final class NotchWindowManager: ObservableObject {
         globalMouseUpMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseUp]) { [weak self] _ in
             guard let self = self else { return }
             for c in self.controllers {
-                if c.state == .dropTarget {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        c.collapse()
+                if c.state == .dropTarget && !c.isPerformingDrop {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        if c.state == .dropTarget && !c.isPerformingDrop {
+                            c.collapse()
+                        }
                     }
                 }
             }
