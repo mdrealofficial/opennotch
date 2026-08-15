@@ -141,12 +141,13 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     }
     
     private func updateDropZone(location: NSPoint) {
-        let visibleRect = activeVisibleScreenRect()
-        let midX = visibleRect.midX
-        if location.x < midX {
-            self.activeDropZone = .filesTray
+        let screenMidX = screen.frame.midX
+        if location.x > 500 {
+            // Screen coordinates
+            self.activeDropZone = (location.x < screenMidX) ? .filesTray : .airdrop
         } else {
-            self.activeDropZone = .airdrop
+            // Local window coordinates (430 pt pill width)
+            self.activeDropZone = (location.x < 215) ? .filesTray : .airdrop
         }
     }
     
@@ -357,6 +358,11 @@ public final class NotchWindowManager: ObservableObject {
                 let inDragZone = mouseLoc.y >= screenMaxY - 140 && abs(mouseLoc.x - screenMidX) <= 240
                 if inDragZone {
                     controller.enterDropTargetMode()
+                    if mouseLoc.x < screenMidX {
+                        controller.activeDropZone = .filesTray
+                    } else {
+                        controller.activeDropZone = .airdrop
+                    }
                 } else if controller.state == .dropTarget && mouseLoc.y < screenMaxY - 180 {
                     controller.collapse()
                 }
