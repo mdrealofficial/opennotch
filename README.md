@@ -17,11 +17,11 @@
 | :--- | :--- |
 | 🪄 **Hardware Notch Snapping** | Auto-detects physical MacBook notch insets and blends seamlessly. |
 | 🏝️ **Dynamic Floating Island** | Elegant floating capsule fallback for external monitors and notch-less Macs. |
-| 🎵 **Media Player & Visualizer** | Live status for **Apple Music** & **Spotify**, animated equalizer, and scrubbing. |
+| 🎵 **Media Player & Visualizer** | Live status for **Apple Music**, **Spotify**, and browser playback (YouTube/Chrome/Safari), animated equalizer, and scrubbing. |
 | 📦 **Drop Shelf (AirDrop & Stash)** | Stash files, view sizes, copy paths, reveal in Finder, or drag out to apps. |
 | 🪞 **Camera Mirror Widget** | Instant webcam preview directly in the notch before video meetings. |
 | ⏱️ **Timer & Stopwatch** | Live Pomodoro & countdown timers with real-time countdown badge in the compact notch. |
-| 🎧 **Bluetooth Accessories Hub** | Live battery levels for AirPods, Magic Mouse, Magic Keyboard, and headphones. |
+| 🎧 **Bluetooth Accessories Hub** | Real-time monitoring of paired/connected devices (AirPods, Magic Mouse, Keyboard, iPhone, Mac) with live battery levels and connect toggles. |
 | ⚡️ **Pipelines & Shortcuts Runner** | 1-click execution for macOS Shortcuts, screenshot capture, appearance toggle, and scripts. |
 | 💻 **Developer HUD (CPU, RAM, Uptime)** | Live CPU load, RAM usage, Battery health, Terminal launcher, and Unix timestamps. |
 | 📅 **Calendar & Scratchpad** | Daily meeting glance and persistent temporary notes scratchpad. |
@@ -61,12 +61,9 @@ flowchart TD
     
     ExpandedView --> TabMedia["🎵 Media Hub"]
     ExpandedView --> TabShelf["📦 Drop Shelf"]
+    ExpandedView --> TabBT["🎧 Bluetooth Gear"]
     ExpandedView --> TabMirror["🪞 Camera Mirror"]
     ExpandedView --> TabTimer["⏱️ Timers & Pomodoro"]
-    ExpandedView --> TabBT["🎧 Bluetooth Gear"]
-    ExpandedView --> TabPipe["⚡️ Shortcuts / Pipelines"]
-    ExpandedView --> TabDev["💻 Dev HUD"]
-    ExpandedView --> TabCal["📅 Calendar & Notes"]
     ExpandedView --> TabSettings["⚙️ Preferences"]
 ```
 
@@ -82,56 +79,13 @@ flowchart TD
 ```bash
 # Clone the repository
 git clone https://github.com/mdrealofficial/opennotch.git
-cd OpenNotch
+cd opennotch
 
 # Build the project
 swift build
 
-# Run unit tests
-swift test
-
-# Launch OpenNotch
+# Run OpenNotch
 swift run
-```
-
----
-
-## ⌨️ Shortcuts & Controls
-
-- **Hover:** Hover cursor over the notch for 0.15s to expand the hub.
-- **Click:** Click the compact notch pill to toggle expansion.
-- **Global Hotkey:** Press `⌥ + ⌘ + N` to expand / collapse from anywhere.
-- **Menu Bar Icon:** Click the menu bar item (`✨`) to access tabs, settings, or quit.
-
----
-
-## 🧩 Creating a Custom Community Widget
-
-Adding a new widget to OpenNotch is straightforward:
-
-```swift
-import SwiftUI
-
-struct MyCustomWidget: NotchWidget {
-    var id: String = "my.custom.widget"
-    var title: String = "My Tool"
-    var iconName: String = "wrench.and.screwdriver"
-    var order: Int = 10
-    
-    func makeCompactView() -> some View {
-        HStack {
-            Image(systemName: iconName)
-            Text("Ready")
-        }
-    }
-    
-    func makeExpandedView() -> some View {
-        VStack {
-            Text("My Custom Hub Widget")
-                .font(.headline)
-        }
-    }
-}
 ```
 
 ---
