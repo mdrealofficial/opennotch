@@ -363,48 +363,58 @@ public struct NotchContainerView: View {
     // MARK: - State 4: On Drag Drop Target Shelf (Files Tray & AirDrop)
     private var dropTargetView: some View {
         HStack(spacing: 8) {
-            // Left Zone: Files Tray (Dashed cyan border when active)
+            // Left Zone: Files Tray (Green Dotted Line when hovered/active)
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.04))
+                    .fill(panelController.activeDropZone == .filesTray ? Color.green.opacity(0.14) : Color.white.opacity(0.04))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .strokeBorder(
-                                panelController.activeDropZone == .filesTray ? Color.cyan : Color.white.opacity(0.12),
+                                panelController.activeDropZone == .filesTray ? Color.green : Color.white.opacity(0.12),
                                 style: StrokeStyle(
-                                    lineWidth: 1.6,
-                                    dash: panelController.activeDropZone == .filesTray ? [5, 4] : []
+                                    lineWidth: panelController.activeDropZone == .filesTray ? 2.2 : 1.0,
+                                    lineCap: .round,
+                                    lineJoin: .round,
+                                    dash: panelController.activeDropZone == .filesTray ? [4, 4] : []
                                 )
                             )
+                            .shadow(color: panelController.activeDropZone == .filesTray ? Color.green.opacity(0.7) : Color.clear, radius: 6)
                     )
                 
                 HStack(spacing: 8) {
                     Image(systemName: "tray.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(panelController.activeDropZone == .filesTray ? Color.cyan : Color.white.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(panelController.activeDropZone == .filesTray ? Color.green : Color.white.opacity(0.85))
                     
                     Text("Files Tray")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(panelController.activeDropZone == .filesTray ? Color.green : Color.white)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
             
-            // Right Zone: AirDrop (Rich solid blue pill when active)
+            // Right Zone: AirDrop (Blue Dotted / Solid pill when active)
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(panelController.activeDropZone == .airdrop ? Color(red: 0/255, green: 75/255, blue: 175/255) : Color.white.opacity(0.04))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .strokeBorder(
-                                panelController.activeDropZone == .airdrop ? Color.blue.opacity(0.9) : Color.white.opacity(0.12),
-                                lineWidth: 1
+                                panelController.activeDropZone == .airdrop ? Color.blue : Color.white.opacity(0.12),
+                                style: StrokeStyle(
+                                    lineWidth: panelController.activeDropZone == .airdrop ? 2.2 : 1.0,
+                                    lineCap: .round,
+                                    lineJoin: .round,
+                                    dash: panelController.activeDropZone == .airdrop ? [4, 4] : []
+                                )
                             )
+                            .shadow(color: panelController.activeDropZone == .airdrop ? Color.blue.opacity(0.7) : Color.clear, radius: 6)
                     )
                 
                 HStack(spacing: 8) {
                     Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.white)
                     
                     Text("AirDrop")
@@ -413,6 +423,7 @@ public struct NotchContainerView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
