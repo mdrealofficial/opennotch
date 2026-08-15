@@ -118,7 +118,7 @@ public struct NotchContainerView: View {
             HStack(spacing: 4) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 4) {
-                        ForEach(WidgetTab.allCases) { tab in
+                        ForEach(prefs.visibleTabs) { tab in
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.16)) {
                                     prefs.selectedTab = tab
