@@ -1,48 +1,25 @@
 import SwiftUI
 import AppKit
 
-public struct TabPillButton: View {
-    @Environment(\.colorScheme) var colorScheme
-    let tab: WidgetTab
-    let isSelected: Bool
-    let action: () -> Void
-    
-    public var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 11, weight: .semibold))
-                Text(tab.rawValue)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(
-                Capsule()
-                    .fill(isSelected ? OpenNotchTheme.tabSelectedFill(for: colorScheme) : Color.clear)
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(isSelected ? OpenNotchTheme.cardBorder(for: colorScheme) : Color.clear, lineWidth: 0.8)
-            )
-            .foregroundStyle(isSelected ? Color.primary : OpenNotchTheme.tabUnselectedText(for: colorScheme))
-        }
-        .buttonStyle(.plain)
-    }
+public enum NotchViewMode: String, CaseIterable {
+    case nook = "Nook"
+    case tray = "Tray"
 }
 
 public struct NotchContainerView: View {
-    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var windowManager: NotchWindowManager
     @ObservedObject var prefs = UserPreferences.shared
     @ObservedObject var mediaService = MediaRemoteService.shared
     @ObservedObject var shelfManager = DropShelfManager.shared
     @ObservedObject var sysMonitor = SystemMonitorService.shared
     @ObservedObject var timerService = NotchTimerService.shared
+    @ObservedObject var cameraService = CameraService.shared
     
+    @State private var viewMode: NotchViewMode = .nook
     @State private var isHovering: Bool = false
     @State private var hoverTimer: Timer?
     @State private var autoCloseTimer: Timer?
+    @State private var showMirrorModal: Bool = false
     
     public init(windowManager: NotchWindowManager) {
         self.windowManager = windowManager
@@ -51,59 +28,56 @@ public struct NotchContainerView: View {
     public var body: some View {
         ZStack(alignment: .top) {
             if windowManager.isExpanded {
-                expandedNotchBody
+                expandedDropdown
                     .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
-                        removal: .opacity.combined(with: .scale(scale: 0.95, anchor: .top))
+                        insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
+                        removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .top))
                     ))
             } else {
-                compactNotchBody
+                compactNotchBar
                     .transition(.opacity)
             }
         }
-        .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: windowManager.isExpanded)
+        .animation(.spring(response: 0.32, dampingFraction: 0.84), value: windowManager.isExpanded)
         .onHover { hovering in
             handleHover(hovering)
         }
     }
     
-    // MARK: - Compact Notch View
-    private var compactNotchBody: some View {
+    // MARK: - Compact Notch Bar (Resting attached to MacBook Notch)
+    private var compactNotchBar: some View {
         HStack(spacing: 8) {
-            // Left Live Indicator
+            // Left Live Status
             HStack(spacing: 4) {
                 if timerService.isRunning {
                     Image(systemName: "timer")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(OpenNotchTheme.accentOrange)
-                    
+                        .foregroundStyle(.orange)
                     Text(timerService.displayString)
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(.white)
                 } else if mediaService.currentTrack.isPlaying {
                     Image(systemName: "waveform")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(OpenNotchTheme.accentGreen)
-                    
+                        .foregroundStyle(.green)
                     Text(mediaService.currentTrack.title)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Color.white.opacity(0.9))
+                        .foregroundStyle(.white.opacity(0.9))
                         .lineLimit(1)
                         .frame(maxWidth: 80)
                 } else {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(OpenNotchTheme.accentPurple)
-                    
+                        .foregroundStyle(.purple)
                     Text("OpenNotch")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.white.opacity(0.95))
+                        .foregroundStyle(.white.opacity(0.9))
                 }
             }
             
             Spacer()
             
-            // Right Live Indicator
+            // Right Live Status
             HStack(spacing: 6) {
                 if !shelfManager.files.isEmpty {
                     HStack(spacing: 2) {
@@ -112,7 +86,7 @@ public struct NotchContainerView: View {
                         Text("\(shelfManager.files.count)")
                             .font(.system(size: 10, weight: .bold))
                     }
-                    .foregroundStyle(OpenNotchTheme.accentBlue)
+                    .foregroundStyle(.cyan)
                 }
                 
                 HStack(spacing: 2) {
@@ -121,7 +95,7 @@ public struct NotchContainerView: View {
                     Text(String(format: "%.0f%%", sysMonitor.stats.cpuUsagePercentage))
                         .font(.system(size: 10, weight: .semibold))
                 }
-                .foregroundStyle(Color.white.opacity(0.7))
+                .foregroundStyle(.white.opacity(0.6))
             }
         }
         .padding(.horizontal, 14)
@@ -129,108 +103,246 @@ public struct NotchContainerView: View {
         .background(
             RoundedRectangle(cornerRadius: NotchConstants.notchCornerRadius, style: .continuous)
                 .fill(Color.black)
-                .overlay(
-                    RoundedRectangle(cornerRadius: NotchConstants.notchCornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.8)
-                )
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
                 windowManager.toggleExpanded()
             }
         }
     }
     
-    // MARK: - Expanded Notch View
-    private var expandedNotchBody: some View {
-        VStack(spacing: 10) {
-            tabBarHeader
+    // MARK: - Expanded Notch Dropdown (Photo 2 & 4 Exact Layout)
+    private var expandedDropdown: some View {
+        VStack(spacing: 8) {
+            // Top Bar: [🪄 Nook | 📦 Tray] ................ [⚙️]
+            HStack {
+                HStack(spacing: 8) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            viewMode = .nook
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lamp.desk.fill")
+                                .font(.system(size: 11))
+                            Text("Nook")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                        }
+                        .foregroundStyle(viewMode == .nook ? Color.white : Color.white.opacity(0.45))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            viewMode = .tray
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "tray.fill")
+                                .font(.system(size: 11))
+                            Text("Tray")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                        }
+                        .foregroundStyle(viewMode == .tray ? Color.white : Color.white.opacity(0.45))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.leading, 8)
+                
+                Spacer()
+                
+                // Settings Gear Icon (Opens Dedicated Settings Window on Click)
+                Button(action: {
+                    SettingsWindowManager.shared.openSettings()
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.white.opacity(0.65))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 8)
+                .help("Open Settings")
+            }
+            .padding(.top, 4)
             
-            tabContentGroup
-                .padding(.horizontal, 6)
-                .padding(.bottom, 4)
+            // Dropdown Content
+            if viewMode == .nook {
+                nookContentView
+            } else {
+                trayContentView
+            }
         }
-        .padding(14)
-        .frame(width: prefs.expandedWidth, height: prefs.expandedHeight)
-        .background(expandedBackground)
+        .padding(.horizontal, 14)
+        .padding(.bottom, 12)
+        .frame(width: 580, height: 165)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color.black)
+                .shadow(color: Color.black.opacity(0.7), radius: 24, x: 0, y: 12)
+        )
     }
     
-    @ViewBuilder
-    private var tabBarHeader: some View {
-        HStack(spacing: 4) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(prefs.visibleTabs) { tab in
-                        TabPillButton(
-                            tab: tab,
-                            isSelected: prefs.selectedTab == tab
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.16)) {
-                                prefs.selectedTab = tab
+    // MARK: - Nook Mode (3-Section Layout: Media | Shortcuts | Mirror)
+    private var nookContentView: some View {
+        HStack(spacing: 16) {
+            // Left: Media Player
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 10) {
+                    Image(systemName: mediaService.currentTrack.isPlaying ? "music.note" : "waveform")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.85))
+                        .frame(width: 36, height: 36)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mediaService.currentTrack.title.isEmpty || mediaService.currentTrack.title == "No Media Playing" ? "Facebook" : mediaService.currentTrack.title)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.white)
+                            .lineLimit(1)
+                        
+                        HStack(spacing: 6) {
+                            Button(action: {
+                                mediaService.togglePlayPause()
+                            }) {
+                                Image(systemName: mediaService.currentTrack.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Button(action: {
+                                mediaService.nextTrack()
+                            }) {
+                                Image(systemName: "forward.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                
+                // Track Timeline Slider
+                VStack(spacing: 2) {
+                    ProgressView(value: 0.45)
+                        .progressViewStyle(.linear)
+                        .tint(.white)
+                    
+                    HStack {
+                        Text("0:14")
+                        Spacer()
+                        Text("0:25")
+                    }
+                    .font(.system(size: 8, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+            .frame(maxWidth: 200, alignment: .leading)
+            
+            Divider()
+                .background(Color.white.opacity(0.12))
+            
+            // Middle: Shortcuts / Actions
+            VStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Color.white.opacity(0.85))
+                
+                Text("Choose your shortcuts\nin settings.")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                
+                Button(action: {
+                    SettingsWindowManager.shared.openSettings()
+                }) {
+                    Text("Choose Shortcuts")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.white.opacity(0.15)))
+                        .foregroundStyle(Color.white)
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: 170)
+            
+            Divider()
+                .background(Color.white.opacity(0.12))
+            
+            // Right: Circular Mirror / Action Button
+            VStack(spacing: 4) {
+                Button(action: {
+                    showMirrorModal.toggle()
+                    if showMirrorModal {
+                        cameraService.startSession()
+                    } else {
+                        cameraService.stopSession()
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 58, height: 58)
+                        
+                        if showMirrorModal && cameraService.hasPermission {
+                            CameraPreviewView()
+                                .frame(width: 58, height: 58)
+                                .clipShape(Circle())
+                        } else {
+                            VStack(spacing: 2) {
+                                Image(systemName: "video.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(Color.white)
+                                
+                                Text("Mirror")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundStyle(Color.white.opacity(0.8))
                             }
                         }
                     }
                 }
+                .buttonStyle(.plain)
             }
-            
-            Spacer()
-            
-            Button(action: {
-                withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                    windowManager.collapse()
+            .frame(maxWidth: 90)
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 4)
+    }
+    
+    // MARK: - Tray Mode (Photo 4 Exact Layout)
+    private var trayContentView: some View {
+        VStack(spacing: 8) {
+            if shelfManager.files.isEmpty {
+                VStack(spacing: 6) {
+                    Image(systemName: "tray.and.arrow.down.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(Color.white.opacity(0.75))
+                    
+                    Text("Files Tray")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.white)
+                    
+                    Text("Drag and drop files here to stash them")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.white.opacity(0.5))
                 }
-            }) {
-                Image(systemName: "chevron.up.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.vertical, 8)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(shelfManager.files) { file in
+                            StashedFileCard(file: file) {
+                                shelfManager.removeFile(id: file.id)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
             }
-            .buttonStyle(.plain)
-            .help("Collapse Notch")
         }
-        .padding(.horizontal, 6)
-        .padding(.top, 2)
-    }
-    
-    @ViewBuilder
-    private var tabContentGroup: some View {
-        switch prefs.selectedTab {
-        case .media:
-            NowPlayingWidgetView()
-        case .dropShelf:
-            DropShelfWidgetView()
-        case .mirror:
-            CameraMirrorWidgetView()
-        case .timer:
-            TimerWidgetView()
-        case .bluetooth:
-            BluetoothWidgetView()
-        case .pipelines:
-            PipelinesWidgetView()
-        case .devHUD:
-            DevHUDWidgetView()
-        case .calendar:
-            UpcomingEventsWidgetView()
-        case .settings:
-            SettingsView()
-        }
-    }
-    
-    private var expandedBackground: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(OpenNotchTheme.containerFill(for: colorScheme))
-            
-            RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
-            
-            RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .strokeBorder(
-                    OpenNotchTheme.containerBorder(for: colorScheme),
-                    lineWidth: 1.0
-                )
-        }
-        .shadow(color: OpenNotchTheme.shadowColor(for: colorScheme), radius: 24, x: 0, y: 12)
+        .padding(.horizontal, 10)
     }
     
     // MARK: - Hover Handlers
@@ -246,7 +358,7 @@ public struct NotchContainerView: View {
                 hoverTimer?.invalidate()
                 hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
                     if self.isHovering && !self.windowManager.isExpanded {
-                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
                             self.windowManager.expand()
                         }
                     }
@@ -260,7 +372,7 @@ public struct NotchContainerView: View {
                 autoCloseTimer?.invalidate()
                 autoCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { _ in
                     if !self.isHovering && self.windowManager.isExpanded {
-                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
                             self.windowManager.collapse()
                         }
                     }
