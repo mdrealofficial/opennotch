@@ -7,7 +7,7 @@ public enum NotchViewMode: String, CaseIterable {
 }
 
 public struct NotchContainerView: View {
-    @ObservedObject var windowManager: NotchWindowManager
+    @ObservedObject var panelController: NotchPanelController
     @ObservedObject var prefs = UserPreferences.shared
     @ObservedObject var mediaService = MediaRemoteService.shared
     @ObservedObject var shelfManager = DropShelfManager.shared
@@ -21,13 +21,13 @@ public struct NotchContainerView: View {
     @State private var autoCloseTimer: Timer?
     @State private var showMirrorModal: Bool = false
     
-    public init(windowManager: NotchWindowManager) {
-        self.windowManager = windowManager
+    public init(panelController: NotchPanelController) {
+        self.panelController = panelController
     }
     
     public var body: some View {
         VStack(spacing: 0) {
-            if windowManager.isExpanded {
+            if panelController.isExpanded {
                 expandedDropdown
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)),
@@ -40,7 +40,7 @@ public struct NotchContainerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .ignoresSafeArea()
-        .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: windowManager.isExpanded)
+        .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: panelController.isExpanded)
         .onHover { hovering in
             handleHover(hovering)
         }
@@ -109,7 +109,7 @@ public struct NotchContainerView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                windowManager.toggleExpanded()
+                panelController.toggleExpanded()
             }
         }
     }
@@ -347,7 +347,7 @@ public struct NotchContainerView: View {
         .padding(.horizontal, 10)
     }
     
-    // MARK: - Hover Handlers
+    // MARK: - Hover Handlers (Per-Screen Independent Hover)
     private func handleHover(_ hovering: Bool) {
         isHovering = hovering
         guard prefs.alwaysOpenOnHover else { return }
@@ -356,12 +356,12 @@ public struct NotchContainerView: View {
             autoCloseTimer?.invalidate()
             autoCloseTimer = nil
             
-            if !windowManager.isExpanded {
+            if !panelController.isExpanded {
                 hoverTimer?.invalidate()
                 hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
-                    if self.isHovering && !self.windowManager.isExpanded {
+                    if self.isHovering && !self.panelController.isExpanded {
                         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                            self.windowManager.expand()
+                            self.panelController.expand()
                         }
                     }
                 }
@@ -370,12 +370,12 @@ public struct NotchContainerView: View {
             hoverTimer?.invalidate()
             hoverTimer = nil
             
-            if windowManager.isExpanded {
+            if panelController.isExpanded {
                 autoCloseTimer?.invalidate()
                 autoCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { _ in
-                    if !self.isHovering && self.windowManager.isExpanded {
+                    if !self.isHovering && self.panelController.isExpanded {
                         withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                            self.windowManager.collapse()
+                            self.panelController.collapse()
                         }
                     }
                 }

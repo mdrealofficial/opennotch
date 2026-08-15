@@ -2,12 +2,62 @@ import AppKit
 import SwiftUI
 import Combine
 
+public final class NotchPanelController: ObservableObject, Identifiable {
+    public let id = UUID()
+    public let screen: NSScreen
+    public let panel: NotchPanel
+    @Published public var isExpanded: Bool = false
+    
+    public init(screen: NSScreen) {
+        self.screen = screen
+        let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
+        let initialFrame = screenInfo.compactFrame()
+        self.panel = NotchPanel(contentRect: initialFrame)
+    }
+    
+    public func expand() {
+        guard !isExpanded else { return }
+        isExpanded = true
+        updateFrame(animated: true)
+    }
+    
+    public func collapse() {
+        guard isExpanded else { return }
+        isExpanded = false
+        updateFrame(animated: true)
+    }
+    
+    public func toggleExpanded() {
+        if isExpanded {
+            collapse()
+        } else {
+            expand()
+        }
+    }
+    
+    public func updateFrame(animated: Bool = true) {
+        let prefs = UserPreferences.shared
+        let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
+        let targetFrame: NSRect = isExpanded
+            ? screenInfo.expandedFrame(expandedWidth: prefs.expandedWidth, expandedHeight: prefs.expandedHeight)
+            : screenInfo.compactFrame()
+        
+        if animated {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.28
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                self.panel.animator().setFrame(targetFrame, display: true)
+            }
+        } else {
+            self.panel.setFrame(targetFrame, display: true)
+        }
+    }
+}
+
 public final class NotchWindowManager: ObservableObject {
     public static let shared = NotchWindowManager()
     
-    @Published public private(set) var isExpanded: Bool = false
-    
-    private var panels: [(panel: NotchPanel, screen: NSScreen)] = []
+    private var controllers: [NotchPanelController] = []
     private var cancellables = Set<AnyCancellable>()
     
     private init() {
@@ -19,11 +69,10 @@ public final class NotchWindowManager: ObservableObject {
     }
     
     public func rebuildPanels() {
-        // Clean up existing panels
-        for item in panels {
-            item.panel.close()
+        for c in controllers {
+            c.panel.close()
         }
-        panels.removeAll()
+        controllers.removeAll()
         
         let prefs = UserPreferences.shared
         let mode = ScreenDisplayMode(rawValue: prefs.screenDisplayModeRaw) ?? .allScreens
@@ -48,65 +97,38 @@ public final class NotchWindowManager: ObservableObject {
         }
         
         for screen in targetScreens {
-            let screenInfo = ScreenGeometryHelper.screenInfo(for: screen)
-            let initialFrame = isExpanded
-                ? screenInfo.expandedFrame(expandedWidth: prefs.expandedWidth, expandedHeight: prefs.expandedHeight)
-                : screenInfo.compactFrame()
+            let controller = NotchPanelController(screen: screen)
+            let hostingView = NSHostingView(rootView: NotchContainerView(panelController: controller))
+            controller.panel.contentView = hostingView
+            controller.updateFrame(animated: false)
+            controller.panel.orderFrontRegardless()
             
-            let panel = NotchPanel(contentRect: initialFrame)
-            let hostingView = NSHostingView(rootView: NotchContainerView(windowManager: self))
-            panel.contentView = hostingView
-            panel.setFrame(initialFrame, display: true)
-            panel.orderFrontRegardless()
-            
-            panels.append((panel: panel, screen: screen))
+            controllers.append(controller)
         }
+    }
+    
+    public func activeController() -> NotchPanelController? {
+        let mouseLoc = NSEvent.mouseLocation
+        return controllers.first(where: { NSPointInRect(mouseLoc, $0.screen.frame) }) ?? controllers.first
     }
     
     public func expand() {
-        guard !isExpanded else { return }
-        isExpanded = true
-        updatePanelFrames(animated: true)
+        activeController()?.expand()
     }
     
     public func collapse() {
-        guard isExpanded else { return }
-        isExpanded = false
-        updatePanelFrames(animated: true)
-    }
-    
-    public func toggleExpanded() {
-        if isExpanded {
-            collapse()
-        } else {
-            expand()
+        for c in controllers {
+            c.collapse()
         }
     }
     
+    public func toggleExpanded() {
+        activeController()?.toggleExpanded()
+    }
+    
     public func updatePanelFrames(animated: Bool = true) {
-        let prefs = UserPreferences.shared
-        
-        for item in panels {
-            let screenInfo = ScreenGeometryHelper.screenInfo(for: item.screen)
-            let targetFrame: NSRect
-            if isExpanded {
-                targetFrame = screenInfo.expandedFrame(
-                    expandedWidth: prefs.expandedWidth,
-                    expandedHeight: prefs.expandedHeight
-                )
-            } else {
-                targetFrame = screenInfo.compactFrame()
-            }
-            
-            if animated {
-                NSAnimationContext.runAnimationGroup { context in
-                    context.duration = 0.28
-                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                    item.panel.animator().setFrame(targetFrame, display: true)
-                }
-            } else {
-                item.panel.setFrame(targetFrame, display: true)
-            }
+        for c in controllers {
+            c.updateFrame(animated: animated)
         }
     }
     
