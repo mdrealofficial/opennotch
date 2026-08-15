@@ -40,7 +40,6 @@ public struct NotchContainerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .ignoresSafeArea()
-        .animation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping), value: panelController.isExpanded)
         .onHover { hovering in
             handleHover(hovering)
         }
@@ -109,9 +108,7 @@ public struct NotchContainerView: View {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                panelController.toggleExpanded()
-            }
+            panelController.toggleExpanded()
         }
     }
     
@@ -370,9 +367,7 @@ public struct NotchContainerView: View {
                 hoverTimer?.invalidate()
                 hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
                     if self.isHovering && !self.panelController.isExpanded {
-                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                            self.panelController.expand()
-                        }
+                        self.panelController.expand()
                     }
                 }
             }
@@ -384,9 +379,7 @@ public struct NotchContainerView: View {
                 autoCloseTimer?.invalidate()
                 autoCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: false) { _ in
                     if !self.isHovering && self.panelController.isExpanded {
-                        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
-                            self.panelController.collapse()
-                        }
+                        self.panelController.collapse()
                     }
                 }
             }

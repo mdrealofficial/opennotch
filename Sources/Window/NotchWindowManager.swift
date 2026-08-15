@@ -17,13 +17,17 @@ public final class NotchPanelController: ObservableObject, Identifiable {
     
     public func expand() {
         guard !isExpanded else { return }
-        isExpanded = true
+        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+            self.isExpanded = true
+        }
         updateFrame(animated: true)
     }
     
     public func collapse() {
         guard isExpanded else { return }
-        isExpanded = false
+        withAnimation(.spring(response: NotchConstants.springResponse, dampingFraction: NotchConstants.springDamping)) {
+            self.isExpanded = false
+        }
         updateFrame(animated: true)
     }
     
@@ -42,14 +46,17 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             ? screenInfo.expandedFrame(expandedWidth: prefs.expandedWidth, expandedHeight: prefs.expandedHeight)
             : screenInfo.compactFrame()
         
-        if animated {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.28
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                self.panel.animator().setFrame(targetFrame, display: true)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if animated {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.28
+                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    self.panel.animator().setFrame(targetFrame, display: true)
+                }
+            } else {
+                self.panel.setFrame(targetFrame, display: true)
             }
-        } else {
-            self.panel.setFrame(targetFrame, display: true)
         }
     }
 }
@@ -99,6 +106,7 @@ public final class NotchWindowManager: ObservableObject {
         for screen in targetScreens {
             let controller = NotchPanelController(screen: screen)
             let hostingView = NSHostingView(rootView: NotchContainerView(panelController: controller))
+            hostingView.autoresizingMask = [.width, .height]
             controller.panel.contentView = hostingView
             controller.updateFrame(animated: false)
             controller.panel.orderFrontRegardless()
