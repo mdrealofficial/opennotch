@@ -9,7 +9,7 @@ public final class SettingsWindowManager: ObservableObject {
     private init() {}
     
     public func openSettings() {
-        if let existing = windowController?.window, existing.isVisible {
+        if let existing = windowController?.window {
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -19,13 +19,13 @@ public final class SettingsWindowManager: ObservableObject {
         let hostingController = NSHostingController(rootView: settingsView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 500),
+            contentRect: NSRect(x: 0, y: 0, width: 540, height: 530),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         window.center()
-        window.title = "General"
+        window.title = "OpenNotch Settings"
         window.contentViewController = hostingController
         window.isReleasedWhenClosed = false
         
