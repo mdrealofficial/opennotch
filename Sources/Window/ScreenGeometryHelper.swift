@@ -18,14 +18,14 @@ public struct NotchScreenInfo {
             self.notchWidth = 220
         } else {
             self.hasPhysicalNotch = false
-            self.notchHeight = 32
+            self.notchHeight = 34
             self.notchWidth = 220
         }
     }
     
     public func compactFrame(customWidth: CGFloat? = nil, customHeight: CGFloat? = nil) -> NSRect {
         let width = customWidth ?? (hasPhysicalNotch ? notchWidth : 220)
-        let height = customHeight ?? (hasPhysicalNotch ? notchHeight : 32)
+        let height = customHeight ?? (hasPhysicalNotch ? notchHeight : 34)
         let x = floor(screenFrame.midX - (width / 2))
         let y = screenFrame.maxY - height
         return NSRect(x: x, y: y, width: width, height: height)
@@ -41,7 +41,6 @@ public struct NotchScreenInfo {
 
 public enum ScreenGeometryHelper {
     public static func mainScreenInfo() -> NotchScreenInfo {
-        // Find screen with notch or the main interactive screen
         let targetScreen = NSScreen.screens.first { screen in
             screen.safeAreaInsets.top > 0
         } ?? NSScreen.main ?? NSScreen.screens[0]

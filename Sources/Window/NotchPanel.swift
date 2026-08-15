@@ -10,7 +10,9 @@ public final class NotchPanel: NSPanel {
         )
         
         self.isFloatingPanel = true
-        self.level = .floating
+        // Set window level above the macOS Menu Bar (.mainMenu = 24, .statusBar = 25)
+        // so that OpenNotch renders ON TOP of the topbar, flush with the screen bezel.
+        self.level = .statusBar + 2
         self.collectionBehavior = [
             .canJoinAllSpaces,
             .stationary,
