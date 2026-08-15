@@ -60,9 +60,6 @@ public struct NotchContainerView: View {
                 Label("Quit OpenNotch", systemImage: "power")
             }
         }
-        .onHover { hovering in
-            panelController.setHovered(hovering)
-        }
     }
     
     // MARK: - State 1: Normal Minimal Resting Notch (Image 1)
@@ -72,6 +69,11 @@ public struct NotchContainerView: View {
             .frame(width: 170, height: 10)
             .clipShape(NotchShape(earRadius: 4, cornerRadius: 8))
             .contentShape(Rectangle())
+            .onHover { hovering in
+                if hovering {
+                    panelController.setHovered(true)
+                }
+            }
             .onTapGesture {
                 panelController.toggleExpanded()
             }
@@ -139,6 +141,9 @@ public struct NotchContainerView: View {
                 .shadow(color: Color.black.opacity(0.35), radius: 12, x: 0, y: 6)
         )
         .contentShape(Rectangle())
+        .onHover { hovering in
+            panelController.setHovered(hovering)
+        }
         .onTapGesture {
             panelController.toggleExpanded()
         }
@@ -220,6 +225,12 @@ public struct NotchContainerView: View {
             .shadow(color: Color.black.opacity(0.32), radius: 28, x: 0, y: 14)
             .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 4)
         )
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            if !hovering && prefs.alwaysOpenOnHover {
+                panelController.collapse()
+            }
+        }
     }
     
     // MARK: - Nook Mode (Image 3 Left Media Hub & Quick Launcher)
@@ -267,17 +278,17 @@ public struct NotchContainerView: View {
                         ProgressView(value: min(1.0, max(0.0, mediaService.currentTrack.duration > 0 ? mediaService.currentTrack.position / mediaService.currentTrack.duration : 0.35)))
                             .progressViewStyle(.linear)
                             .tint(.white)
-                        
-                        HStack {
-                            Text("0:14")
-                            Spacer()
-                            Text("0:25")
-                        }
-                        .font(.system(size: 8, weight: .regular, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.5))
+                    
+                    HStack {
+                        Text("0:14")
+                        Spacer()
+                        Text("0:25")
                     }
+                    .font(.system(size: 8, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.5))
                 }
-                .frame(maxWidth: 190, alignment: .leading)
+            }
+            .frame(maxWidth: 190, alignment: .leading)
             } else {
                 // "No app seems to be running. Wanna open one?" (Exact Image 3)
                 VStack(spacing: 4) {
@@ -292,7 +303,9 @@ public struct NotchContainerView: View {
                     HStack(spacing: 8) {
                         // Apple Music
                         Button(action: {
-                            NSWorkspace.shared.launchApplication("Music")
+                            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Music") {
+                                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+                            }
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 6)
@@ -308,7 +321,9 @@ public struct NotchContainerView: View {
                         
                         // VLC
                         Button(action: {
-                            NSWorkspace.shared.launchApplication("VLC")
+                            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.videolan.vlc") {
+                                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+                            }
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 6)
@@ -342,7 +357,9 @@ public struct NotchContainerView: View {
                         
                         // Spotify
                         Button(action: {
-                            NSWorkspace.shared.launchApplication("Spotify")
+                            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.spotify.client") {
+                                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+                            }
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 6)

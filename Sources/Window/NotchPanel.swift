@@ -48,14 +48,14 @@ public final class NotchPassThroughHostingView<Content: View>: NSHostingView<Con
         
         switch controller.state {
         case .expanded:
-            activeWidth = NotchConstants.defaultExpandedWidth + 24
-            activeHeight = NotchConstants.defaultExpandedHeight + 16
+            activeWidth = NotchConstants.defaultExpandedWidth
+            activeHeight = NotchConstants.defaultExpandedHeight
         case .peek:
-            activeWidth = NotchConstants.defaultCompactWidth + 16
-            activeHeight = NotchConstants.defaultCompactHeight + 10
+            activeWidth = NotchConstants.defaultCompactWidth
+            activeHeight = NotchConstants.defaultCompactHeight
         case .compact:
-            activeWidth = 190
-            activeHeight = 16
+            activeWidth = 170
+            activeHeight = 12
         }
         
         let minX = (bounds.width - activeWidth) / 2
@@ -69,6 +69,7 @@ public final class NotchPassThroughHostingView<Content: View>: NSHostingView<Con
             return super.hitTest(point)
         }
         
+        // Pass clicks/hovers outside the visible notch boundary through to underlying windows
         return nil
     }
 }
