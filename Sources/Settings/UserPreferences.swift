@@ -35,6 +35,26 @@ public enum ScreenDisplayMode: String, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
+public enum HoverPeekStyle: String, CaseIterable, Identifiable {
+    case liveActivities = "Live Activities (Media / Clock)"
+    case clockDate = "Clock & Date"
+    case systemStats = "Battery & System Stats"
+    case quickShortcuts = "Quick App Launchers"
+    case minimal = "Minimal Indicator"
+    
+    public var id: String { rawValue }
+    
+    public var icon: String {
+        switch self {
+        case .liveActivities: return "waveform.badge.magnifyingglass"
+        case .clockDate: return "clock.fill"
+        case .systemStats: return "gauge.with.dots.needle.bottom.50percent"
+        case .quickShortcuts: return "square.grid.2x2.fill"
+        case .minimal: return "capsule.fill"
+        }
+    }
+}
+
 public final class UserPreferences: ObservableObject {
     public static let shared = UserPreferences()
     
@@ -43,13 +63,19 @@ public final class UserPreferences: ObservableObject {
     @AppStorage("screenDisplayMode") public var screenDisplayModeRaw: String = ScreenDisplayMode.allScreens.rawValue
     @AppStorage("fullscreenVisibility") public var fullscreenVisibilityRaw: String = FullscreenVisibilityOption.notchedOnly.rawValue
     @AppStorage("mediaSource") public var mediaSourceRaw: String = MediaSourceOption.system.rawValue
+    @AppStorage("hoverPeekStyle") public var hoverPeekStyleRaw: String = HoverPeekStyle.liveActivities.rawValue
+    
+    public var hoverPeekStyle: HoverPeekStyle {
+        get { HoverPeekStyle(rawValue: hoverPeekStyleRaw) ?? .liveActivities }
+        set { hoverPeekStyleRaw = newValue.rawValue }
+    }
     
     // Notch Toggles
     @AppStorage("preferRoundButtons") public var preferRoundButtons: Bool = true
     @AppStorage("translucentNotchBackground") public var translucentNotchBackground: Bool = false
     @AppStorage("alwaysOpenOnHover") public var alwaysOpenOnHover: Bool = true
     @AppStorage("disableHaptics") public var disableHaptics: Bool = false
-    @AppStorage("preventClosingOnMouseLeave") public var preventClosingOnMouseLeave: Bool = true
+    @AppStorage("preventClosingOnMouseLeave") public var preventClosingOnMouseLeave: Bool = false
     @AppStorage("lockWhileTyping") public var lockWhileTyping: Bool = false
     
     // Fine Tune & Content
@@ -101,8 +127,8 @@ public final class UserPreferences: ObservableObject {
     // MARK: - Nook Tab (Hub)
     @AppStorage("enableNook") public var enableNook: Bool = true
     @AppStorage("showDividersBetweenWidgets") public var showDividersBetweenWidgets: Bool = true
-    @AppStorage("expandedWidth") public var expandedWidth: Double = 620
-    @AppStorage("expandedHeight") public var expandedHeight: Double = 270
+    @AppStorage("expandedWidth") public var expandedWidth: Double = 580
+    @AppStorage("expandedHeight") public var expandedHeight: Double = 155
     
     // Active Tab Selection
     @AppStorage("selectedTabRaw") public var selectedTabRaw: String = WidgetTab.media.rawValue
@@ -152,7 +178,7 @@ public final class UserPreferences: ObservableObject {
         translucentNotchBackground = false
         alwaysOpenOnHover = true
         disableHaptics = false
-        preventClosingOnMouseLeave = true
+        preventClosingOnMouseLeave = false
         lockWhileTyping = false
         contentPadding = 12
         notchWidthOffset = 0
@@ -182,8 +208,8 @@ public final class UserPreferences: ObservableObject {
         
         enableNook = true
         showDividersBetweenWidgets = true
-        expandedWidth = 620
-        expandedHeight = 270
+        expandedWidth = 580
+        expandedHeight = 155
     }
     
     private init() {}
