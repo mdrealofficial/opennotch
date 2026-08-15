@@ -196,12 +196,14 @@ public final class NotchPanelController: ObservableObject, Identifiable {
             NSSound(named: "Pop")?.play()
             
             if targetZone == .airdrop {
-                if let service = NSSharingService(named: .sendViaAirDrop) {
-                    if service.canPerform(withItems: urlsToShare) {
-                        service.perform(withItems: urlsToShare)
-                    }
+                NSApp.activate(ignoringOtherApps: true)
+                let picker = NSSharingServicePicker(items: urlsToShare)
+                if let view = self.panel.contentView {
+                    picker.show(relativeTo: NSRect(x: 320, y: 10, width: 100, height: 40), of: view, preferredEdge: .minY)
+                } else if let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: urlsToShare) {
+                    service.perform(withItems: urlsToShare)
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     self.isPerformingDrop = false
                     self.collapse()
                 }
@@ -217,7 +219,7 @@ public final class NotchPanelController: ObservableObject, Identifiable {
                     self.panel.ignoresMouseEvents = false
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     self.isPerformingDrop = false
                 }
             }
