@@ -1,65 +1,88 @@
 import SwiftUI
 
-/// Ultra-smooth Apple-grade Bezier Notch Shape with continuous G2 curvature (squircle).
-/// Features organic concave ear fillets flaring into the top screen bezel and smooth convex rounded bottom corners.
+/// A squircle-inspired notch shape with smooth top "ears" that fluidly blend into the display bezel.
 public struct NotchShape: Shape {
     public var earRadius: CGFloat
     public var cornerRadius: CGFloat
     
-    public init(earRadius: CGFloat = 12, cornerRadius: CGFloat = 20) {
+    public init(earRadius: CGFloat = 10, cornerRadius: CGFloat = 14) {
         self.earRadius = earRadius
         self.cornerRadius = cornerRadius
+    }
+    
+    public var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get {
+            AnimatablePair(earRadius, cornerRadius)
+        }
+        set {
+            earRadius = newValue.first
+            cornerRadius = newValue.second
+        }
     }
     
     public func path(in rect: CGRect) -> Path {
         var path = Path()
         
-        let w = rect.width
-        let h = rect.height
-        let ear = max(0, min(earRadius, w / 4))
-        let cr = max(0, min(cornerRadius, h / 2))
+        let width = rect.width
+        let height = rect.height
         
-        // 1. Start top-left (0, 0)
+        // Clamp radii so they never exceed geometry limits
+        let effectiveEar = max(0, min(earRadius, min(width / 4, height)))
+        let effectiveCorner = max(0, min(cornerRadius, min(width / 4, height / 2)))
+        
+        // Start top-left outside ear
         path.move(to: CGPoint(x: 0, y: 0))
         
-        // 2. Concave top-left ear flare with continuous cubic Bezier
-        path.addCurve(
-            to: CGPoint(x: ear, y: ear),
-            control1: CGPoint(x: ear * 0.45, y: 0),
-            control2: CGPoint(x: ear, y: ear * 0.55)
-        )
+        if effectiveEar > 0.001 {
+            // Left ear fillet with G2-continuous cubic bezier curve
+            path.addCurve(
+                to: CGPoint(x: effectiveEar, y: effectiveEar),
+                control1: CGPoint(x: effectiveEar * 0.45, y: 0),
+                control2: CGPoint(x: effectiveEar, y: effectiveEar * 0.55)
+            )
+        } else {
+            path.addLine(to: CGPoint(x: 0, y: 0))
+        }
         
-        // 3. Left vertical edge
-        path.addLine(to: CGPoint(x: ear, y: h - cr))
+        // Left vertical edge down to bottom-left corner
+        let leftCornerStartY = max(effectiveEar, height - effectiveCorner)
+        path.addLine(to: CGPoint(x: effectiveEar, y: leftCornerStartY))
         
-        // 4. Convex bottom-left corner with continuous cubic Bezier
-        path.addCurve(
-            to: CGPoint(x: ear + cr, y: h),
-            control1: CGPoint(x: ear, y: h - cr * 0.45),
-            control2: CGPoint(x: ear + cr * 0.45, y: h)
-        )
+        if effectiveCorner > 0.001 {
+            // Bottom-left rounded corner
+            path.addQuadCurve(
+                to: CGPoint(x: effectiveEar + effectiveCorner, y: height),
+                control: CGPoint(x: effectiveEar, y: height)
+            )
+        }
         
-        // 5. Bottom horizontal edge
-        path.addLine(to: CGPoint(x: w - ear - cr, y: h))
+        // Bottom horizontal edge
+        let rightCornerStartX = max(effectiveEar + effectiveCorner, width - effectiveEar - effectiveCorner)
+        path.addLine(to: CGPoint(x: rightCornerStartX, y: height))
         
-        // 6. Convex bottom-right corner with continuous cubic Bezier
-        path.addCurve(
-            to: CGPoint(x: w - ear, y: h - cr),
-            control1: CGPoint(x: w - ear - cr * 0.45, y: h),
-            control2: CGPoint(x: w - ear, y: h - cr * 0.45)
-        )
+        if effectiveCorner > 0.001 {
+            // Bottom-right rounded corner
+            path.addQuadCurve(
+                to: CGPoint(x: width - effectiveEar, y: height - effectiveCorner),
+                control: CGPoint(x: width - effectiveEar, y: height)
+            )
+        }
         
-        // 7. Right vertical edge
-        path.addLine(to: CGPoint(x: w - ear, y: ear))
+        // Right vertical edge up to top-right ear
+        path.addLine(to: CGPoint(x: width - effectiveEar, y: effectiveEar))
         
-        // 8. Concave top-right ear flare with continuous cubic Bezier
-        path.addCurve(
-            to: CGPoint(x: w, y: 0),
-            control1: CGPoint(x: w - ear, y: ear * 0.55),
-            control2: CGPoint(x: w - ear * 0.45, y: 0)
-        )
+        if effectiveEar > 0.001 {
+            // Right ear fillet with G2-continuous cubic bezier curve
+            path.addCurve(
+                to: CGPoint(x: width, y: 0),
+                control1: CGPoint(x: width - effectiveEar, y: effectiveEar * 0.55),
+                control2: CGPoint(x: width - (effectiveEar * 0.45), y: 0)
+            )
+        } else {
+            path.addLine(to: CGPoint(x: width, y: 0))
+        }
         
-        // 9. Close top edge
+        // Top edge closing
         path.addLine(to: CGPoint(x: 0, y: 0))
         path.closeSubpath()
         
