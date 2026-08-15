@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 public struct TabPillButton: View {
+    @Environment(\.colorScheme) var colorScheme
     let tab: WidgetTab
     let isSelected: Bool
     let action: () -> Void
@@ -18,19 +19,20 @@ public struct TabPillButton: View {
             .padding(.vertical, 5)
             .background(
                 Capsule()
-                    .fill(isSelected ? Color(red: 44/255, green: 44/255, blue: 48/255) : Color.clear)
+                    .fill(isSelected ? OpenNotchTheme.tabSelectedFill(for: colorScheme) : Color.clear)
             )
             .overlay(
                 Capsule()
-                    .strokeBorder(isSelected ? Color.white.opacity(0.15) : Color.clear, lineWidth: 0.8)
+                    .strokeBorder(isSelected ? OpenNotchTheme.cardBorder(for: colorScheme) : Color.clear, lineWidth: 0.8)
             )
-            .foregroundStyle(isSelected ? Color.white : Color(white: 0.6))
+            .foregroundStyle(isSelected ? Color.primary : OpenNotchTheme.tabUnselectedText(for: colorScheme))
         }
         .buttonStyle(.plain)
     }
 }
 
 public struct NotchContainerView: View {
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var windowManager: NotchWindowManager
     @ObservedObject var prefs = UserPreferences.shared
     @ObservedObject var mediaService = MediaRemoteService.shared
@@ -73,29 +75,29 @@ public struct NotchContainerView: View {
                 if timerService.isRunning {
                     Image(systemName: "timer")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(OpenNotchTheme.accentOrange)
                     
                     Text(timerService.displayString)
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.white)
                 } else if mediaService.currentTrack.isPlaying {
                     Image(systemName: "waveform")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(OpenNotchTheme.accentGreen)
                     
                     Text(mediaService.currentTrack.title)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(Color.white.opacity(0.9))
                         .lineLimit(1)
                         .frame(maxWidth: 80)
                 } else {
                     Image(systemName: "sparkles")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(OpenNotchTheme.accentPurple)
                     
                     Text("OpenNotch")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundStyle(Color.white.opacity(0.95))
                 }
             }
             
@@ -110,7 +112,7 @@ public struct NotchContainerView: View {
                         Text("\(shelfManager.files.count)")
                             .font(.system(size: 10, weight: .bold))
                     }
-                    .foregroundStyle(.cyan)
+                    .foregroundStyle(OpenNotchTheme.accentBlue)
                 }
                 
                 HStack(spacing: 2) {
@@ -119,7 +121,7 @@ public struct NotchContainerView: View {
                     Text(String(format: "%.0f%%", sysMonitor.stats.cpuUsagePercentage))
                         .font(.system(size: 10, weight: .semibold))
                 }
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(Color.white.opacity(0.7))
             }
         }
         .padding(.horizontal, 14)
@@ -129,7 +131,7 @@ public struct NotchContainerView: View {
                 .fill(Color.black)
                 .overlay(
                     RoundedRectangle(cornerRadius: NotchConstants.notchCornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.8)
+                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.8)
                 )
         )
         .contentShape(Rectangle())
@@ -181,7 +183,7 @@ public struct NotchContainerView: View {
             }) {
                 Image(systemName: "chevron.up.circle.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.secondary)
             }
             .buttonStyle(.plain)
             .help("Collapse Notch")
@@ -217,26 +219,18 @@ public struct NotchContainerView: View {
     private var expandedBackground: some View {
         ZStack {
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(Color(red: 12/255, green: 12/255, blue: 14/255).opacity(0.98))
+                .fill(OpenNotchTheme.containerFill(for: colorScheme))
             
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial.opacity(0.4))
+                .fill(.ultraThinMaterial)
             
             RoundedRectangle(cornerRadius: NotchConstants.expandedCornerRadius, style: .continuous)
                 .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.18),
-                            Color.white.opacity(0.04),
-                            Color.white.opacity(0.08)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    OpenNotchTheme.containerBorder(for: colorScheme),
                     lineWidth: 1.0
                 )
         }
-        .shadow(color: Color.black.opacity(0.6), radius: 28, x: 0, y: 14)
+        .shadow(color: OpenNotchTheme.shadowColor(for: colorScheme), radius: 24, x: 0, y: 12)
     }
     
     // MARK: - Hover Handlers

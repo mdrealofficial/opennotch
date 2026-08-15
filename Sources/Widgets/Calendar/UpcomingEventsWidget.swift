@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct UpcomingEventsWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @AppStorage("quickScratchpadNote") private var quickNote: String = ""
     
     private let dateFormatter: DateFormatter = {
@@ -22,7 +23,7 @@ public struct UpcomingEventsWidgetView: View {
                     
                     Text(dateFormatter.string(from: Date()))
                         .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(OpenNotchTheme.textPrimary)
+                        .foregroundStyle(Color.primary)
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
@@ -34,14 +35,14 @@ public struct UpcomingEventsWidgetView: View {
                     EventRow(
                         title: "OpenNotch Architecture Review",
                         time: "2:00 PM",
-                        tagColor: OpenNotchTheme.accentCyan
+                        tagColor: OpenNotchTheme.accentBlue
                     )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
-                .background(OpenNotchTheme.subtleDivider)
+                .background(OpenNotchTheme.dividerColor(for: colorScheme))
             
             // Quick Scratchpad Note
             VStack(alignment: .leading, spacing: 6) {
@@ -52,7 +53,7 @@ public struct UpcomingEventsWidgetView: View {
                     
                     Text("Quick Scratchpad")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(OpenNotchTheme.textPrimary)
+                        .foregroundStyle(Color.primary)
                     
                     Spacer()
                     
@@ -61,7 +62,7 @@ public struct UpcomingEventsWidgetView: View {
                             quickNote = ""
                         }
                         .font(.system(size: 10))
-                        .foregroundStyle(OpenNotchTheme.textTertiary)
+                        .foregroundStyle(Color.secondary)
                         .buttonStyle(.plain)
                     }
                 }
@@ -72,13 +73,13 @@ public struct UpcomingEventsWidgetView: View {
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(OpenNotchTheme.inputBackground)
+                            .fill(OpenNotchTheme.inputFill(for: colorScheme))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                            .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
                     )
-                    .foregroundStyle(OpenNotchTheme.textPrimary)
+                    .foregroundStyle(Color.primary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -86,6 +87,7 @@ public struct UpcomingEventsWidgetView: View {
 }
 
 public struct EventRow: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let time: String
     let tagColor: Color
@@ -98,24 +100,25 @@ public struct EventRow: View {
             
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(OpenNotchTheme.textPrimary)
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
             
             Spacer()
             
             Text(time)
                 .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(OpenNotchTheme.textSecondary)
+                .foregroundStyle(Color.secondary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(OpenNotchTheme.cardBackground)
+                .fill(OpenNotchTheme.cardFill(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.04), radius: 3, x: 0, y: 1)
     }
 }

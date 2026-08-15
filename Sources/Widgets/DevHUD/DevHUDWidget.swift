@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct DevHUDWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var sysMonitor = SystemMonitorService.shared
     @State private var quickText: String = ""
     @State private var convertedText: String = ""
@@ -25,7 +26,7 @@ public struct DevHUDWidgetView: View {
                     value: String(format: "%.1f / %.0f GB", sysMonitor.stats.ramUsedGB, sysMonitor.stats.ramTotalGB),
                     progress: sysMonitor.stats.ramPercentage / 100,
                     icon: "memorychip",
-                    color: .cyan
+                    color: OpenNotchTheme.accentBlue
                 )
                 
                 MetricCard(
@@ -33,7 +34,7 @@ public struct DevHUDWidgetView: View {
                     value: "\(sysMonitor.stats.batteryLevel)% \(sysMonitor.stats.isCharging ? "⚡️" : "")",
                     progress: Double(sysMonitor.stats.batteryLevel) / 100,
                     icon: batteryIcon(level: sysMonitor.stats.batteryLevel, isCharging: sysMonitor.stats.isCharging),
-                    color: .green
+                    color: OpenNotchTheme.accentGreen
                 )
                 
                 MetricCard(
@@ -41,7 +42,7 @@ public struct DevHUDWidgetView: View {
                     value: sysMonitor.stats.uptimeString,
                     progress: 1.0,
                     icon: "clock.arrow.circlepath",
-                    color: .orange
+                    color: OpenNotchTheme.accentOrange
                 )
             }
             
@@ -57,8 +58,15 @@ public struct DevHUDWidgetView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.12)))
-                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(OpenNotchTheme.tabSelectedFill(for: colorScheme))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
+                    )
+                    .foregroundStyle(Color.primary)
                 }
                 .buttonStyle(.plain)
                 
@@ -72,8 +80,15 @@ public struct DevHUDWidgetView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.12)))
-                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(OpenNotchTheme.tabSelectedFill(for: colorScheme))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
+                    )
+                    .foregroundStyle(Color.primary)
                 }
                 .buttonStyle(.plain)
                 
@@ -81,15 +96,15 @@ public struct DevHUDWidgetView: View {
                 
                 Text("macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
                     .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color.secondary)
             }
         }
     }
     
     private func cpuColor(_ usage: Double) -> Color {
-        if usage > 80 { return .red }
-        if usage > 50 { return .orange }
-        return .purple
+        if usage > 80 { return OpenNotchTheme.accentRed }
+        if usage > 50 { return OpenNotchTheme.accentOrange }
+        return OpenNotchTheme.accentPurple
     }
     
     private func batteryIcon(level: Int, isCharging: Bool) -> String {
@@ -115,6 +130,7 @@ public struct DevHUDWidgetView: View {
 }
 
 public struct MetricCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let value: String
     let progress: Double
@@ -132,12 +148,12 @@ public struct MetricCard: View {
                 
                 Text(title)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(Color.secondary)
             }
             
             Text(value)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
             
             ProgressView(value: min(1.0, max(0.0, progress)))
@@ -147,11 +163,12 @@ public struct MetricCard: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(red: 24/255, green: 24/255, blue: 28/255))
+                .fill(OpenNotchTheme.cardFill(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 6, x: 0, y: 2)
     }
 }

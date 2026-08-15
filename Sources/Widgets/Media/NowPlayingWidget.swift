@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct NowPlayingWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var mediaService = MediaRemoteService.shared
     
     public init() {}
@@ -11,22 +12,20 @@ public struct NowPlayingWidgetView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
-                        LinearGradient(
-                            colors: [Color(red: 40/255, green: 20/255, blue: 60/255), Color(red: 20/255, green: 20/255, blue: 35/255)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        colorScheme == .dark
+                            ? LinearGradient(colors: [Color(red: 45/255, green: 25/255, blue: 65/255), Color(red: 25/255, green: 25/255, blue: 40/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(colors: [Color(red: 235/255, green: 225/255, blue: 250/255), Color(red: 220/255, green: 230/255, blue: 255/255)], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
                     .frame(width: 72, height: 72)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                            .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
                     )
-                    .shadow(color: Color.purple.opacity(0.25), radius: 10, x: 0, y: 4)
+                    .shadow(color: Color.purple.opacity(colorScheme == .dark ? 0.25 : 0.12), radius: 8, x: 0, y: 3)
                 
                 Image(systemName: mediaService.currentTrack.isPlaying ? "music.note" : "waveform")
                     .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(OpenNotchTheme.silverIconGradient)
+                    .foregroundStyle(OpenNotchTheme.iconGradient(for: colorScheme))
             }
             
             // Track Info & Progress
@@ -35,12 +34,12 @@ public struct NowPlayingWidgetView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(mediaService.currentTrack.title)
                             .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(OpenNotchTheme.textPrimary)
+                            .foregroundStyle(Color.primary)
                             .lineLimit(1)
                         
                         Text(mediaService.currentTrack.artist)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(OpenNotchTheme.textSecondary)
+                            .foregroundStyle(Color.secondary)
                             .lineLimit(1)
                     }
                     
@@ -48,14 +47,14 @@ public struct NowPlayingWidgetView: View {
                     
                     VisualizerBarView(
                         levels: mediaService.visualizerLevels,
-                        barColor: mediaService.currentTrack.isPlaying ? OpenNotchTheme.accentGreen : Color.white.opacity(0.3)
+                        barColor: mediaService.currentTrack.isPlaying ? OpenNotchTheme.accentGreen : Color.secondary.opacity(0.4)
                     )
                 }
                 
                 // Progress Bar
                 ProgressView(value: min(1.0, max(0.0, mediaService.currentTrack.duration > 0 ? mediaService.currentTrack.position / mediaService.currentTrack.duration : 0.3)))
                     .progressViewStyle(.linear)
-                    .tint(.purple)
+                    .tint(OpenNotchTheme.accentPurple)
                 
                 // Controls
                 HStack(spacing: 16) {
@@ -63,28 +62,28 @@ public struct NowPlayingWidgetView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(OpenNotchTheme.cardBackground))
-                        .overlay(Capsule().strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 0.8))
-                        .foregroundStyle(OpenNotchTheme.textSecondary)
+                        .background(Capsule().fill(OpenNotchTheme.tabSelectedFill(for: colorScheme)))
+                        .overlay(Capsule().strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 0.8))
+                        .foregroundStyle(Color.secondary)
                     
                     Spacer()
                     
                     Button(action: { mediaService.previousTrack() }) {
                         Image(systemName: "backward.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(OpenNotchTheme.silverIconGradient)
+                            .foregroundStyle(Color.primary)
                     }
                     .buttonStyle(.plain)
                     
                     Button(action: { mediaService.togglePlayPause() }) {
                         ZStack {
                             Circle()
-                                .fill(Color.white)
+                                .fill(Color.primary)
                                 .frame(width: 32, height: 32)
                             
                             Image(systemName: mediaService.currentTrack.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(Color.black)
+                                .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
                                 .offset(x: mediaService.currentTrack.isPlaying ? 0 : 1)
                         }
                     }
@@ -93,7 +92,7 @@ public struct NowPlayingWidgetView: View {
                     Button(action: { mediaService.nextTrack() }) {
                         Image(systemName: "forward.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(OpenNotchTheme.silverIconGradient)
+                            .foregroundStyle(Color.primary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -102,11 +101,12 @@ public struct NowPlayingWidgetView: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(OpenNotchTheme.cardBackground)
+                .fill(OpenNotchTheme.cardFill(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 6, x: 0, y: 2)
     }
 }

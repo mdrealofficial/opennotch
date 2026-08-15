@@ -45,6 +45,7 @@ public final class DropShelfManager: ObservableObject {
 }
 
 public struct DropShelfWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var shelfManager = DropShelfManager.shared
     @State private var isTargeted: Bool = false
     
@@ -55,14 +56,14 @@ public struct DropShelfWidgetView: View {
             HStack {
                 Label("Drop Shelf & File Stash", systemImage: "tray.and.arrow.down.fill")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(OpenNotchTheme.textPrimary)
+                    .foregroundStyle(Color.primary)
                 
                 Spacer()
                 
                 if !shelfManager.files.isEmpty {
                     Text("\(shelfManager.files.count) files")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(OpenNotchTheme.textSecondary)
+                        .foregroundStyle(Color.secondary)
                     
                     Button("Clear") {
                         shelfManager.clearAll()
@@ -78,22 +79,22 @@ public struct DropShelfWidgetView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(
-                            isTargeted ? OpenNotchTheme.accentCyan : OpenNotchTheme.cardBorder,
+                            isTargeted ? OpenNotchTheme.accentBlue : OpenNotchTheme.cardBorder(for: colorScheme),
                             style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
                         )
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(isTargeted ? OpenNotchTheme.accentCyan.opacity(0.12) : OpenNotchTheme.inputBackground)
+                                .fill(isTargeted ? OpenNotchTheme.accentBlue.opacity(0.12) : OpenNotchTheme.inputFill(for: colorScheme))
                         )
                     
                     VStack(spacing: 6) {
                         Image(systemName: isTargeted ? "arrow.down.circle.fill" : "plus.rectangle.on.folder")
                             .font(.system(size: 24))
-                            .foregroundStyle(isTargeted ? OpenNotchTheme.accentCyan : Color.white.opacity(0.8))
+                            .foregroundStyle(isTargeted ? OpenNotchTheme.accentBlue : Color.secondary)
                         
                         Text(isTargeted ? "Drop to stash file" : "Drag & drop files here to hold or share")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(OpenNotchTheme.textSecondary)
+                            .foregroundStyle(Color.secondary)
                     }
                     .padding(.vertical, 16)
                 }
@@ -136,6 +137,7 @@ public struct DropShelfWidgetView: View {
 }
 
 public struct StashedFileCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let file: StashedFile
     let onRemove: () -> Void
     
@@ -146,7 +148,7 @@ public struct StashedFileCard: View {
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(OpenNotchTheme.textTertiary)
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
             }
@@ -158,13 +160,13 @@ public struct StashedFileCard: View {
             
             Text(file.name)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(OpenNotchTheme.textPrimary)
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
                 .frame(maxWidth: 80)
             
             Text(file.sizeString)
                 .font(.system(size: 9, weight: .regular))
-                .foregroundStyle(OpenNotchTheme.textTertiary)
+                .foregroundStyle(Color.secondary)
             
             HStack(spacing: 6) {
                 Button(action: {
@@ -173,7 +175,7 @@ public struct StashedFileCard: View {
                 }) {
                     Image(systemName: "doc.on.doc")
                         .font(.system(size: 10))
-                        .foregroundStyle(OpenNotchTheme.textSecondary)
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
                 .help("Copy Path")
@@ -183,7 +185,7 @@ public struct StashedFileCard: View {
                 }) {
                     Image(systemName: "folder")
                         .font(.system(size: 10))
-                        .foregroundStyle(OpenNotchTheme.textSecondary)
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
                 .help("Reveal in Finder")
@@ -193,12 +195,13 @@ public struct StashedFileCard: View {
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(OpenNotchTheme.cardBackground)
+                .fill(OpenNotchTheme.cardFill(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 6, x: 0, y: 2)
         .onDrag {
             NSItemProvider(object: file.url as NSURL)
         }

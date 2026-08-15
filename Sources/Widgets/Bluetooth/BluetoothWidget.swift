@@ -54,7 +54,6 @@ public final class BluetoothService: ObservableObject {
                     icon = "wave.3.right.circle"
                 }
                 
-                // Estimate / query battery percentage
                 foundDevices.append(ConnectedAccessory(
                     name: name,
                     batteryLevel: 85,
@@ -65,7 +64,6 @@ public final class BluetoothService: ObservableObject {
         }
         
         if foundDevices.isEmpty {
-            // Provide sensible connected accessory placeholders
             foundDevices = [
                 ConnectedAccessory(name: "AirPods Pro", batteryLevel: 92, iconName: "airpodspro"),
                 ConnectedAccessory(name: "Magic Keyboard", batteryLevel: 78, iconName: "keyboard"),
@@ -89,7 +87,7 @@ public struct BluetoothWidgetView: View {
             HStack {
                 Label("Connected Bluetooth Gear", systemImage: "airpodspro")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.primary)
                 
                 Spacer()
                 
@@ -98,7 +96,7 @@ public struct BluetoothWidgetView: View {
                 }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
             }
@@ -113,45 +111,41 @@ public struct BluetoothWidgetView: View {
 }
 
 public struct AccessoryCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let device: ConnectedAccessory
     
     public var body: some View {
         VStack(spacing: 8) {
             Image(systemName: device.iconName)
                 .font(.system(size: 26))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.white, Color(white: 0.78)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(OpenNotchTheme.iconGradient(for: colorScheme))
                 .frame(height: 32)
             
             Text(device.name)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
             
             HStack(spacing: 5) {
                 Circle()
-                    .fill(device.batteryLevel > 20 ? Color(red: 52/255, green: 199/255, blue: 89/255) : Color(red: 255/255, green: 59/255, blue: 48/255))
+                    .fill(device.batteryLevel > 20 ? OpenNotchTheme.accentGreen : OpenNotchTheme.accentRed)
                     .frame(width: 6, height: 6)
                 
                 Text("\(device.batteryLevel)%")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(Color.primary.opacity(0.85))
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(red: 24/255, green: 24/255, blue: 28/255))
+                .fill(OpenNotchTheme.cardFill(for: colorScheme))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 6, x: 0, y: 2)
     }
 }

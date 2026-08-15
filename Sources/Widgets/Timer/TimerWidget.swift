@@ -77,6 +77,7 @@ public final class NotchTimerService: ObservableObject {
 }
 
 public struct TimerWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @ObservedObject var timerService = NotchTimerService.shared
     
     public init() {}
@@ -95,7 +96,7 @@ public struct TimerWidgetView: View {
                 
                 Text(timerService.displayString)
                     .font(.system(size: 40, weight: .bold, design: .monospaced))
-                    .foregroundStyle(OpenNotchTheme.textPrimary)
+                    .foregroundStyle(Color.primary)
                 
                 // Play / Pause / Reset Buttons
                 HStack(spacing: 12) {
@@ -116,7 +117,7 @@ public struct TimerWidgetView: View {
                         .background(
                             Capsule().fill(timerService.isRunning ? OpenNotchTheme.accentOrange : OpenNotchTheme.accentGreen)
                         )
-                        .foregroundStyle(Color.black)
+                        .foregroundStyle(Color.white)
                     }
                     .buttonStyle(.plain)
                     
@@ -126,9 +127,9 @@ public struct TimerWidgetView: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 13, weight: .bold))
                             .padding(7)
-                            .background(Circle().fill(OpenNotchTheme.cardBackground))
-                            .overlay(Circle().strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1))
-                            .foregroundStyle(OpenNotchTheme.textPrimary)
+                            .background(Circle().fill(OpenNotchTheme.cardFill(for: colorScheme)))
+                            .overlay(Circle().strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1))
+                            .foregroundStyle(Color.primary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -136,13 +137,13 @@ public struct TimerWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
-                .background(OpenNotchTheme.subtleDivider)
+                .background(OpenNotchTheme.dividerColor(for: colorScheme))
             
             // Preset Quick Buttons
             VStack(alignment: .leading, spacing: 8) {
                 Text("Quick Presets")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(OpenNotchTheme.textSecondary)
+                    .foregroundStyle(Color.secondary)
                 
                 HStack(spacing: 8) {
                     PresetButton(title: "Pomodoro", duration: "25m", minutes: 25)
@@ -160,6 +161,7 @@ public struct TimerWidgetView: View {
 }
 
 public struct PresetButton: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let duration: String
     let minutes: Int
@@ -171,22 +173,23 @@ public struct PresetButton: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(OpenNotchTheme.textSecondary)
+                    .foregroundStyle(Color.secondary)
                 
                 Text(duration)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.purple)
+                    .foregroundStyle(OpenNotchTheme.accentPurple)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(OpenNotchTheme.cardBackground)
+                    .fill(OpenNotchTheme.cardFill(for: colorScheme))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                    .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 4, x: 0, y: 1)
         }
         .buttonStyle(.plain)
     }

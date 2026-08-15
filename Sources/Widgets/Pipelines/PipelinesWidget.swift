@@ -19,6 +19,7 @@ public struct PipelineAction: Identifiable {
 }
 
 public struct PipelinesWidgetView: View {
+    @Environment(\.colorScheme) var colorScheme
     @State private var statusMessage: String? = nil
     
     public init() {}
@@ -65,7 +66,7 @@ public struct PipelinesWidgetView: View {
             HStack {
                 Label("Shortcuts & Pipelines Runner", systemImage: "bolt.fill")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(OpenNotchTheme.textPrimary)
+                    .foregroundStyle(Color.primary)
                 
                 Spacer()
                 
@@ -93,7 +94,7 @@ public struct PipelinesWidgetView: View {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(item.color.opacity(0.18))
+                                    .fill(item.color.opacity(colorScheme == .dark ? 0.22 : 0.14))
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: item.icon)
@@ -104,11 +105,11 @@ public struct PipelinesWidgetView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.title)
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(OpenNotchTheme.textPrimary)
+                                    .foregroundStyle(Color.primary)
                                 
                                 Text(item.subtitle)
                                     .font(.system(size: 9, weight: .regular))
-                                    .foregroundStyle(OpenNotchTheme.textSecondary)
+                                    .foregroundStyle(Color.secondary)
                                     .lineLimit(1)
                             }
                             
@@ -117,12 +118,13 @@ public struct PipelinesWidgetView: View {
                         .padding(8)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(OpenNotchTheme.cardBackground)
+                                .fill(OpenNotchTheme.cardFill(for: colorScheme))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .strokeBorder(OpenNotchTheme.cardBorder, lineWidth: 1)
+                                .strokeBorder(OpenNotchTheme.cardBorder(for: colorScheme), lineWidth: 1)
                         )
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.05), radius: 4, x: 0, y: 1)
                     }
                     .buttonStyle(.plain)
                 }
