@@ -365,25 +365,25 @@ public struct NotchContainerView: View {
         HStack(spacing: 8) {
             // Left Zone: Files Tray (Green Dotted Line when hovered/active)
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .fill(panelController.activeDropZone == .filesTray ? Color.green.opacity(0.14) : Color.white.opacity(0.04))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: 11, style: .continuous)
                             .strokeBorder(
                                 panelController.activeDropZone == .filesTray ? Color.green : Color.white.opacity(0.12),
                                 style: StrokeStyle(
-                                    lineWidth: panelController.activeDropZone == .filesTray ? 2.2 : 1.0,
+                                    lineWidth: panelController.activeDropZone == .filesTray ? 2.0 : 1.0,
                                     lineCap: .round,
                                     lineJoin: .round,
                                     dash: panelController.activeDropZone == .filesTray ? [4, 4] : []
                                 )
                             )
-                            .shadow(color: panelController.activeDropZone == .filesTray ? Color.green.opacity(0.7) : Color.clear, radius: 6)
+                            .shadow(color: panelController.activeDropZone == .filesTray ? Color.green.opacity(0.7) : Color.clear, radius: 5)
                     )
                 
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     Image(systemName: "tray.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(panelController.activeDropZone == .filesTray ? Color.green : Color.white.opacity(0.85))
                     
                     Text("Files Tray")
@@ -396,25 +396,25 @@ public struct NotchContainerView: View {
             
             // Right Zone: AirDrop (Blue Dotted / Solid pill when active)
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
                     .fill(panelController.activeDropZone == .airdrop ? Color(red: 0/255, green: 75/255, blue: 175/255) : Color.white.opacity(0.04))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: 11, style: .continuous)
                             .strokeBorder(
                                 panelController.activeDropZone == .airdrop ? Color.blue : Color.white.opacity(0.12),
                                 style: StrokeStyle(
-                                    lineWidth: panelController.activeDropZone == .airdrop ? 2.2 : 1.0,
+                                    lineWidth: panelController.activeDropZone == .airdrop ? 2.0 : 1.0,
                                     lineCap: .round,
                                     lineJoin: .round,
                                     dash: panelController.activeDropZone == .airdrop ? [4, 4] : []
                                 )
                             )
-                            .shadow(color: panelController.activeDropZone == .airdrop ? Color.blue.opacity(0.7) : Color.clear, radius: 6)
+                            .shadow(color: panelController.activeDropZone == .airdrop ? Color.blue.opacity(0.7) : Color.clear, radius: 5)
                     )
                 
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.white)
                     
                     Text("AirDrop")
@@ -426,7 +426,8 @@ public struct NotchContainerView: View {
             .contentShape(Rectangle())
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.top, 22)
+        .padding(.bottom, 8)
         .frame(width: currentWidth, height: currentHeight)
     }
     
