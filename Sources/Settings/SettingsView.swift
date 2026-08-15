@@ -269,7 +269,22 @@ public struct SettingsView: View {
             if liveActivitiesSubtab == 0 {
                 // Live Activities General
                 VStack(alignment: .leading, spacing: 10) {
-                    Toggle("Enable live activities", isOn: $prefs.enableLiveActivities)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("When Notch is Hovered, Show:")
+                            .font(.system(size: 11, weight: .bold))
+                        
+                        Picker("", selection: $prefs.hoverPeekStyleRaw) {
+                            ForEach(HoverPeekStyle.allCases) { style in
+                                Label(style.rawValue, systemImage: style.icon)
+                                    .tag(style.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Toggle("Enable live activities (Media / Timer)", isOn: $prefs.enableLiveActivities)
                     Toggle("Hide in non notched screens", isOn: $prefs.hideInNonNotchedScreens)
                     
                     HStack {
@@ -500,7 +515,7 @@ public struct SettingsView: View {
                         .controlSize(.small)
                     }
                     
-                    Text("v1.0.0 (see changelog)")
+                    Text("v1.1.0 (see changelog)")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.secondary)
                     
